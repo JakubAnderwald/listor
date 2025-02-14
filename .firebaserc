@@ -5,6 +5,9 @@
   "targets": {
     "listor-76c28": {
       "hosting": {
+        "listor-76c28": [
+          "listor-76c28"
+        ],
         "listor-eu": [
           "listor-eu"
         ]
