@@ -1,5 +1,7 @@
 {
   "rules": {
+    ".read": false,
+    ".write": false,
     "todos": {
       ".read": true,
       ".write": true,
@@ -15,10 +17,6 @@
           ".validate": false
         }
       }
-    },
-    "$other": {
-      ".read": false,
-      ".write": false
     }
   }
 }

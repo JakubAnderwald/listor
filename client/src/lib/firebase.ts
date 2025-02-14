@@ -12,12 +12,10 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-// Initialize Realtime Database
-export const database = getDatabase(app);
-
-// Database references
+// Initialize Realtime Database and references
+const database = getDatabase(app);
 const todosRef = ref(database, 'todos');
 
 // Firebase Database API
@@ -28,11 +26,14 @@ export const firebaseDB = {
       const todos: Todo[] = [];
 
       if (data) {
-        Object.entries(data).forEach(([key, value]) => {
-          todos.push({
-            id: parseInt(key),
-            ...(value as Omit<Todo, 'id'>)
-          });
+        Object.entries(data).forEach(([key, value]: [string, any]) => {
+          if (value && typeof value === 'object') {
+            todos.push({
+              id: parseInt(key),
+              text: value.text || '',
+              completed: !!value.completed
+            });
+          }
         });
       }
 
@@ -41,20 +42,35 @@ export const firebaseDB = {
   },
 
   async createTodo(todo: Omit<Todo, 'id'>) {
-    const newTodoRef = push(todosRef);
-    const id = parseInt(newTodoRef.key!.slice(-8), 16);
-    await update(todosRef, {
-      [id]: todo
-    });
-    return { ...todo, id };
+    try {
+      const id = Date.now(); // Using timestamp as ID for better uniqueness
+      await update(ref(database, `todos/${id}`), {
+        text: todo.text,
+        completed: todo.completed
+      });
+      return { ...todo, id };
+    } catch (error) {
+      console.error('Error creating todo:', error);
+      throw error;
+    }
   },
 
   async updateTodo(id: number, todo: Partial<Todo>) {
-    await update(ref(database, `todos/${id}`), todo);
-    return { id, ...todo };
+    try {
+      await update(ref(database, `todos/${id}`), todo);
+      return { id, ...todo };
+    } catch (error) {
+      console.error('Error updating todo:', error);
+      throw error;
+    }
   },
 
   async deleteTodo(id: number) {
-    await remove(ref(database, `todos/${id}`));
+    try {
+      await remove(ref(database, `todos/${id}`));
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+      throw error;
+    }
   }
 };
