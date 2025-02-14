@@ -1,5 +1,15 @@
 {
   "projects": {
-    "default": "listor-eu"
-  }
+    "default": "listor-76c28"
+  },
+  "targets": {
+    "listor-76c28": {
+      "hosting": {
+        "listor-eu": [
+          "listor-eu"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
