@@ -1,0 +1,5 @@
+{
+  "projects": {
+    "default": "${VITE_FIREBASE_PROJECT_ID}"
+  }
+}
