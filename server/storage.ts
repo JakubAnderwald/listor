@@ -28,11 +28,18 @@ export class MemStorage implements IStorage {
   }
 
   async updateTodo(id: number, updateTodo: UpdateTodo): Promise<Todo> {
-    const todo = this.todos.get(id);
-    if (!todo) {
+    const existingTodo = this.todos.get(id);
+    if (!existingTodo) {
       throw new Error("Todo not found");
     }
-    const updatedTodo = { ...todo, ...updateTodo };
+    // Only update the fields that are provided
+    const updatedTodo = { ...existingTodo };
+    if (updateTodo.text !== undefined) {
+      updatedTodo.text = updateTodo.text;
+    }
+    if (updateTodo.completed !== undefined) {
+      updatedTodo.completed = updateTodo.completed;
+    }
     this.todos.set(id, updatedTodo);
     return updatedTodo;
   }

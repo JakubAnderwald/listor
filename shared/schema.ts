@@ -13,10 +13,13 @@ export const insertTodoSchema = createInsertSchema(todos).pick({
   completed: true,
 });
 
-export const updateTodoSchema = createInsertSchema(todos).pick({
-  text: true,
-  completed: true,
-});
+// Make all fields optional for updates
+export const updateTodoSchema = createInsertSchema(todos)
+  .pick({
+    text: true,
+    completed: true,
+  })
+  .partial(); // This makes all fields optional
 
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type UpdateTodo = z.infer<typeof updateTodoSchema>;
