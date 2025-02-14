@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, X, Check } from "lucide-react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { firebaseDB } from "@/lib/firebase";
 
 interface TodoItemProps {
   todo: Todo;
@@ -20,10 +20,9 @@ export default function TodoItem({ todo }: TodoItemProps) {
 
   const updateTodo = useMutation({
     mutationFn: async (data: Partial<Todo>) => {
-      await apiRequest("PATCH", `/api/todos/${todo.id}`, data);
+      await firebaseDB.updateTodo(todo.id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       setIsEditing(false);
     },
     onError: () => {
@@ -33,10 +32,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
 
   const deleteTodo = useMutation({
     mutationFn: async () => {
-      await apiRequest("DELETE", `/api/todos/${todo.id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
+      await firebaseDB.deleteTodo(todo.id);
     },
     onError: () => {
       toast({ title: "Failed to delete todo", variant: "destructive" });

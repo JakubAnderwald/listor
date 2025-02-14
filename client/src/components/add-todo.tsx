@@ -5,9 +5,9 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { firebaseDB } from "@/lib/firebase";
 
 export default function AddTodo() {
   const { toast } = useToast();
@@ -21,10 +21,9 @@ export default function AddTodo() {
 
   const createTodo = useMutation({
     mutationFn: async (data: { text: string; completed: boolean }) => {
-      await apiRequest("POST", "/api/todos", data);
+      await firebaseDB.createTodo(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/todos"] });
       form.reset();
     },
     onError: () => {

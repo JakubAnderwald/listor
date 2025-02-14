@@ -1,15 +1,25 @@
 import TodoList from "@/components/todo-list";
 import AddTodo from "@/components/add-todo";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Todo } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { firebaseDB } from "@/lib/firebase";
 
 export default function Home() {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const queryClient = useQueryClient();
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
+    initialData: [],
   });
+
+  useEffect(() => {
+    // Subscribe to real-time updates
+    firebaseDB.subscribeTodos((updatedTodos) => {
+      queryClient.setQueryData(["/api/todos"], updatedTodos);
+    });
+  }, [queryClient]);
 
   const filteredTodos = todos.filter((todo) => {
     if (filter === "active") return !todo.completed;
