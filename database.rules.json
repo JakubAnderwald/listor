@@ -1,17 +1,7 @@
+
 {
   "rules": {
-    "todos": {
-      ".read": true,
-      ".write": true,
-      "$todoId": {
-        ".validate": "newData.hasChildren(['text', 'completed'])",
-        "text": {
-          ".validate": "newData.isString() && newData.val().length > 0"
-        },
-        "completed": {
-          ".validate": "newData.isBoolean()"
-        }
-      }
-    }
+    ".read": true,
+    ".write": true
   }
 }
