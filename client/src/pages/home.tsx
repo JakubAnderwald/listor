@@ -5,10 +5,14 @@ import { type Todo } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { firebaseDB } from "@/lib/firebase";
+import { useAuth } from "@/contexts/auth-context";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 export default function Home() {
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const queryClient = useQueryClient();
+  const { signOut } = useAuth();
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
     initialData: [],
@@ -32,13 +36,23 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-3xl space-y-8 pt-12">
-        <div className="text-center">
-          <h1 className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-4xl font-bold text-transparent sm:text-6xl">
-            Listor
-          </h1>
-          <p className="mt-4 text-muted-foreground">
-            A simple, modern todo application
-          </p>
+        <div className="flex justify-between items-center">
+          <div className="text-center flex-1">
+            <h1 className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-4xl font-bold text-transparent sm:text-6xl">
+              Listor
+            </h1>
+            <p className="mt-4 text-muted-foreground">
+              A simple, modern todo application
+            </p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={signOut}
+            className="ml-4"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
         </div>
 
         <AddTodo />
