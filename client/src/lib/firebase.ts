@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, update, remove } from "firebase/database";
+import { getDatabase, ref, onValue, set, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo } from "@shared/schema";
 
@@ -83,9 +83,8 @@ export const firebaseDB = {
       };
 
       const id = Date.now();
-      const todoRef = ref(database, `users/${user.uid}/todos/${id}`);
-
-      await update(todoRef, todoData);
+      // Using set() instead of update()
+      await set(ref(database, `users/${user.uid}/todos/${id}`), todoData);
       return { ...todoData, id };
     } catch (error) {
       console.error('Error creating todo:', error);
@@ -102,7 +101,7 @@ export const firebaseDB = {
       if (todo.text !== undefined) updateData.text = todo.text;
       if (todo.completed !== undefined) updateData.completed = todo.completed;
 
-      await update(ref(database, `users/${user.uid}/todos/${id}`), updateData);
+      await set(ref(database, `users/${user.uid}/todos/${id}`), updateData);
       return { id, ...todo };
     } catch (error) {
       console.error('Error updating todo:', error);
