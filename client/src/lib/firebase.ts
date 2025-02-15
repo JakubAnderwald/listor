@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, remove } from "firebase/database";
+import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo } from "@shared/schema";
 
@@ -97,12 +97,34 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to update todos');
 
     try {
-      const updateData: Record<string, any> = {};
-      if (todo.text !== undefined) updateData.text = todo.text;
-      if (todo.completed !== undefined) updateData.completed = todo.completed;
+      // Get the todo ref
+      const todoRef = ref(database, `users/${user.uid}/todos/${id}`);
 
-      await set(ref(database, `users/${user.uid}/todos/${id}`), updateData);
-      return { id, ...todo };
+      // Create update data with all fields preserved
+      const updateData: Record<string, any> = {
+        text: todo.text,
+        completed: todo.completed
+      };
+
+      // Get current data first
+      const snapshot = await get(todoRef);
+      const currentData = snapshot.val();
+
+      // Merge current data with updates
+      const mergedData = {
+        ...currentData,
+        ...updateData
+      };
+
+      // Only update fields that were provided
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      await set(todoRef, mergedData);
+      return { id, ...mergedData };
     } catch (error) {
       console.error('Error updating todo:', error);
       throw error;
