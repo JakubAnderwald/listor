@@ -38,7 +38,7 @@ export default function Home() {
       <div className="mx-auto max-w-3xl space-y-8 pt-12">
         <div className="flex justify-between items-center">
           <div className="text-center flex-1">
-            <h1 className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-4xl font-bold text-transparent sm:text-6xl">
+            <h1 className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-4xl font-bold text-transparent sm:text-6xl">
               Listor
             </h1>
             <p className="mt-4 text-muted-foreground">
