@@ -19,10 +19,14 @@ export default function Login() {
     try {
       await signIn();
       setLocation("/");
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = "Please try again later";
+      if (error.code === "auth/unauthorized-domain") {
+        errorMessage = "This domain is not authorized. Please contact the administrator.";
+      }
       toast({
         title: "Failed to sign in",
-        description: "Please try again later",
+        description: errorMessage,
         variant: "destructive",
       });
     }
