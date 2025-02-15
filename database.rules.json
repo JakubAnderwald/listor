@@ -1,9 +1,21 @@
-
 {
   "rules": {
-    "todos": {
-      ".read": true,
-      ".write": true
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid",
+        "todos": {
+          "$todoId": {
+            ".validate": "newData.hasChildren(['text', 'completed'])",
+            "text": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "completed": {
+              ".validate": "newData.isBoolean()"
+            }
+          }
+        }
+      }
     }
   }
 }

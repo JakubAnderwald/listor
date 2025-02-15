@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, push, update, remove } from "firebase/database";
+import { getDatabase, ref, onValue, update, remove } from "firebase/database";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo } from "@shared/schema";
 
 const firebaseConfig = {
@@ -14,14 +15,44 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Realtime Database and references
+// Initialize Firebase services
 const database = getDatabase(app);
-const todosRef = ref(database, 'todos');
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+// Firebase Auth API
+export const firebaseAuth = {
+  async signInWithGoogle() {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      return result.user;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  },
+
+  async signOut() {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  },
+
+  onAuthStateChanged(callback: (user: any) => void) {
+    return auth.onAuthStateChanged(callback);
+  }
+};
 
 // Firebase Database API
 export const firebaseDB = {
   subscribeTodos: (callback: (todos: Todo[]) => void) => {
-    return onValue(todosRef, (snapshot) => {
+    const user = auth.currentUser;
+    if (!user) return () => {};
+
+    return onValue(ref(database, `users/${user.uid}/todos`), (snapshot) => {
       const data = snapshot.val();
       const todos: Todo[] = [];
 
@@ -42,15 +73,17 @@ export const firebaseDB = {
   },
 
   async createTodo(todo: Omit<Todo, 'id'>) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to create todos');
+
     try {
-      // Create a new todo with specific fields to match validation rules
       const todoData = {
         text: todo.text,
-        completed: false // Always start as not completed
+        completed: false
       };
 
-      const id = Date.now(); // Use timestamp as ID
-      const todoRef = ref(database, `todos/${id}`);
+      const id = Date.now();
+      const todoRef = ref(database, `users/${user.uid}/todos/${id}`);
 
       await update(todoRef, todoData);
       return { ...todoData, id };
@@ -61,12 +94,15 @@ export const firebaseDB = {
   },
 
   async updateTodo(id: number, todo: Partial<Todo>) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to update todos');
+
     try {
       const updateData: Record<string, any> = {};
       if (todo.text !== undefined) updateData.text = todo.text;
       if (todo.completed !== undefined) updateData.completed = todo.completed;
 
-      await update(ref(database, `todos/${id}`), updateData);
+      await update(ref(database, `users/${user.uid}/todos/${id}`), updateData);
       return { id, ...todo };
     } catch (error) {
       console.error('Error updating todo:', error);
@@ -75,8 +111,11 @@ export const firebaseDB = {
   },
 
   async deleteTodo(id: number) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to delete todos');
+
     try {
-      await remove(ref(database, `todos/${id}`));
+      await remove(ref(database, `users/${user.uid}/todos/${id}`));
     } catch (error) {
       console.error('Error deleting todo:', error);
       throw error;
