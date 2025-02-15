@@ -100,28 +100,20 @@ export const firebaseDB = {
       // Get the todo ref
       const todoRef = ref(database, `users/${user.uid}/todos/${id}`);
 
-      // Create update data with all fields preserved
-      const updateData: Record<string, any> = {
-        text: todo.text,
-        completed: todo.completed
-      };
-
       // Get current data first
       const snapshot = await get(todoRef);
       const currentData = snapshot.val();
 
-      // Merge current data with updates
+      if (!currentData) {
+        throw new Error(`Todo with id ${id} not found`);
+      }
+
+      // Merge current data with updates, only for fields that are provided
       const mergedData = {
         ...currentData,
-        ...updateData
+        ...(todo.text !== undefined && { text: todo.text }),
+        ...(todo.completed !== undefined && { completed: todo.completed })
       };
-
-      // Only update fields that were provided
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
-          delete updateData[key];
-        }
-      });
 
       await set(todoRef, mergedData);
       return { id, ...mergedData };
