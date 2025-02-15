@@ -1,7 +1,5 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false,
     "todos": {
       ".read": true,
       ".write": true,
@@ -12,9 +10,6 @@
         },
         "completed": {
           ".validate": "newData.isBoolean()"
-        },
-        "$other": {
-          ".validate": false
         }
       }
     }

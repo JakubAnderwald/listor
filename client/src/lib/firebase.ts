@@ -43,12 +43,17 @@ export const firebaseDB = {
 
   async createTodo(todo: Omit<Todo, 'id'>) {
     try {
-      const id = Date.now(); // Using timestamp as ID for better uniqueness
-      await update(ref(database, `todos/${id}`), {
+      // Create a new todo with specific fields to match validation rules
+      const todoData = {
         text: todo.text,
-        completed: todo.completed
-      });
-      return { ...todo, id };
+        completed: false // Always start as not completed
+      };
+
+      const id = Date.now(); // Use timestamp as ID
+      const todoRef = ref(database, `todos/${id}`);
+
+      await update(todoRef, todoData);
+      return { ...todoData, id };
     } catch (error) {
       console.error('Error creating todo:', error);
       throw error;
@@ -57,7 +62,11 @@ export const firebaseDB = {
 
   async updateTodo(id: number, todo: Partial<Todo>) {
     try {
-      await update(ref(database, `todos/${id}`), todo);
+      const updateData: Record<string, any> = {};
+      if (todo.text !== undefined) updateData.text = todo.text;
+      if (todo.completed !== undefined) updateData.completed = todo.completed;
+
+      await update(ref(database, `todos/${id}`), updateData);
       return { id, ...todo };
     } catch (error) {
       console.error('Error updating todo:', error);
