@@ -43,6 +43,18 @@ export const firebaseAuth = {
   async signInWithGoogle() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
+
+      // Create or update user profile
+      if (result.user) {
+        await firebaseDB.updateUserProfile({
+          uid: result.user.uid,
+          email: result.user.email || '',
+          displayName: result.user.displayName || '',
+          photoURL: result.user.photoURL || '',
+          lastLogin: new Date().toISOString(),
+        });
+      }
+
       return result.user;
     } catch (error) {
       console.error('Error signing in with Google:', error);
@@ -66,6 +78,35 @@ export const firebaseAuth = {
 
 // Firebase Database API
 export const firebaseDB = {
+  async getUserProfile() {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to get user profile');
+
+    try {
+      const snapshot = await get(ref(database, `users/${user.uid}/profile`));
+      return snapshot.val();
+    } catch (error) {
+      console.error('Error getting user profile:', error);
+      throw error;
+    }
+  },
+
+  async updateUserProfile(profile: {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL: string;
+    lastLogin: string;
+  }) {
+    try {
+      await set(ref(database, `users/${profile.uid}/profile`), profile);
+      return profile;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  },
+
   subscribeTodos: (callback: (todos: Todo[]) => void) => {
     const user = auth.currentUser;
     if (!user) return () => {};

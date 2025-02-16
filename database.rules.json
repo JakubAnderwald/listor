@@ -4,6 +4,24 @@
       "$uid": {
         ".read": "$uid === auth.uid",
         ".write": "$uid === auth.uid",
+        "profile": {
+          ".validate": "newData.hasChildren(['uid', 'email', 'displayName', 'lastLogin'])",
+          "uid": {
+            ".validate": "newData.isString() && newData.val() === $uid"
+          },
+          "email": {
+            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
+          },
+          "displayName": {
+            ".validate": "newData.isString()"
+          },
+          "photoURL": {
+            ".validate": "!newData.exists() || newData.isString()"
+          },
+          "lastLogin": {
+            ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
+          }
+        },
         "todos": {
           "$todoId": {
             ".validate": "newData.hasChildren(['text', 'completed'])",
