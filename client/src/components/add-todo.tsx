@@ -29,7 +29,13 @@ export default function AddTodo() {
   });
 
   const createTodo = useMutation({
-    mutationFn: async (data: { text: string; completed: boolean; dueDate: string | null; recurrenceType: string; originalDueDate: string | null }) => {
+    mutationFn: async (data: {
+      text: string;
+      completed: boolean;
+      dueDate: string | null;
+      recurrenceType: RecurrenceType;
+      originalDueDate: string | null;
+    }) => {
       await firebaseDB.createTodo(data);
     },
     onSuccess: () => {
@@ -102,7 +108,7 @@ export default function AddTodo() {
           render={({ field }) => (
             <FormItem className="flex-shrink-0">
               <Select
-                onValueChange={field.onChange}
+                onValueChange={(value: RecurrenceType) => field.onChange(value)}
                 defaultValue={field.value}
               >
                 <SelectTrigger className="w-[140px]">

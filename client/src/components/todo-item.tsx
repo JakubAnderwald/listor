@@ -21,7 +21,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
-  const [editRecurrenceType, setEditRecurrenceType] = useState(todo.recurrenceType);
+  const [editRecurrenceType, setEditRecurrenceType] = useState<RecurrenceType>(todo.recurrenceType);
   const { toast } = useToast();
 
   const isOverdue = todo.dueDate && isBefore(new Date(todo.dueDate), startOfDay(new Date()));
@@ -47,7 +47,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
     },
   });
 
-  const getRecurrenceText = (type: string) => {
+  const getRecurrenceText = (type: RecurrenceType) => {
     switch (type) {
       case RecurrenceType.DAILY:
         return "Repeats daily";
@@ -98,7 +98,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
           </Popover>
           <Select
             value={editRecurrenceType}
-            onValueChange={setEditRecurrenceType}
+            onValueChange={(value: RecurrenceType) => setEditRecurrenceType(value)}
           >
             <SelectTrigger className="w-[140px]">
               <RotateCw className="mr-2 h-4 w-4" />
