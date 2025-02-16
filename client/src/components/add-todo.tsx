@@ -33,7 +33,7 @@ export default function AddTodo() {
       text: string;
       completed: boolean;
       dueDate: string | null;
-      recurrenceType: RecurrenceType;
+      recurrenceType: keyof typeof RecurrenceType;
       originalDueDate: string | null;
     }) => {
       await firebaseDB.createTodo(data);
@@ -108,7 +108,7 @@ export default function AddTodo() {
           render={({ field }) => (
             <FormItem className="flex-shrink-0">
               <Select
-                onValueChange={(value: RecurrenceType) => field.onChange(value)}
+                onValueChange={(value: keyof typeof RecurrenceType) => field.onChange(value)}
                 defaultValue={field.value}
               >
                 <SelectTrigger className="w-[140px]">
@@ -116,11 +116,11 @@ export default function AddTodo() {
                   <SelectValue placeholder="Repeat" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={RecurrenceType.NONE}>Never</SelectItem>
-                  <SelectItem value={RecurrenceType.DAILY}>Daily</SelectItem>
-                  <SelectItem value={RecurrenceType.WEEKLY}>Weekly</SelectItem>
-                  <SelectItem value={RecurrenceType.MONTHLY}>Monthly</SelectItem>
-                  <SelectItem value={RecurrenceType.YEARLY}>Yearly</SelectItem>
+                  <SelectItem value="NONE">Never</SelectItem>
+                  <SelectItem value="DAILY">Daily</SelectItem>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  <SelectItem value="YEARLY">Yearly</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
