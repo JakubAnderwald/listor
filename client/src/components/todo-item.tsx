@@ -64,7 +64,9 @@ export default function TodoItem({ todo }: TodoItemProps) {
   };
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
+    // Convert priority to lowercase for case-insensitive comparison
+    const p = priority.toLowerCase();
+    switch (p) {
       case "high":
         return "!text-red-500 !fill-red-500 !stroke-red-500";
       case "medium":
