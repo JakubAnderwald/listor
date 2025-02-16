@@ -42,7 +42,7 @@ VITE_FIREBASE_APP_ID=your-app-id
 npm run dev
 ```
 
-## Usage
+## 📖 Usage
 
 ### Authentication
 
@@ -55,6 +55,7 @@ npm run dev
 1. Enter your task in the input field
 2. (Optional) Set a due date using the calendar picker
 3. (Optional) Set a recurrence pattern (daily, weekly, monthly, yearly)
+   - **Note:** Due dates are required for recurring tasks
 4. Click "Add Todo" or press Enter
 
 ### Managing Tasks
@@ -76,7 +77,7 @@ When you create a recurring task:
 2. Choose a recurrence pattern
 3. When you complete the task, a new occurrence will automatically be created based on the pattern
 
-## Development
+## 🔧 Development
 
 ### Project Structure
 
