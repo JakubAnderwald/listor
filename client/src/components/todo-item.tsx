@@ -183,7 +183,13 @@ export default function TodoItem({ todo }: TodoItemProps) {
               >
                 {todo.text}
               </span>
-              <Flag className={cn("h-4 w-4", getPriorityColor(todo.priority))} />
+              <Flag 
+                className={cn(
+                  "h-4 w-4",
+                  getPriorityColor(todo.priority),
+                  "!stroke-current" 
+                )} 
+              />
             </div>
             <div className="flex gap-2 items-center">
               {todo.dueDate && (
