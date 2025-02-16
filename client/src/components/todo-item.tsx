@@ -66,11 +66,11 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "text-red-600 fill-red-600 stroke-red-600";
+        return "!text-red-500 !fill-red-500 !stroke-red-500";
       case "medium":
-        return "text-amber-600 fill-amber-600 stroke-amber-600";
+        return "!text-amber-500 !fill-amber-500 !stroke-amber-500";
       case "low":
-        return "text-emerald-600 fill-emerald-600 stroke-emerald-600";
+        return "!text-emerald-500 !fill-emerald-500 !stroke-emerald-500";
       default:
         return "";
     }
