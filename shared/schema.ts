@@ -9,13 +9,23 @@ export const todos = pgTable("todos", {
   dueDate: timestamp("due_date"),
 });
 
-export const insertTodoSchema = createInsertSchema(todos).pick({
-  text: true,
-  completed: true,
-  dueDate: true,
-}).extend({
-  dueDate: z.string().nullable().optional(),
+// Define a more precise schema for the todo
+export const todoSchema = z.object({
+  id: z.number(),
+  text: z.string(),
+  completed: z.boolean(),
+  dueDate: z.string().nullable(),
 });
+
+export const insertTodoSchema = createInsertSchema(todos)
+  .pick({
+    text: true,
+    completed: true,
+    dueDate: true,
+  })
+  .extend({
+    dueDate: z.string().nullable(),
+  });
 
 // Make all fields optional for updates
 export const updateTodoSchema = createInsertSchema(todos)
@@ -24,8 +34,11 @@ export const updateTodoSchema = createInsertSchema(todos)
     completed: true,
     dueDate: true,
   })
-  .partial(); // This makes all fields optional
+  .partial()
+  .extend({
+    dueDate: z.string().nullable().optional(),
+  });
 
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type UpdateTodo = z.infer<typeof updateTodoSchema>;
-export type Todo = typeof todos.$inferSelect;
+export type Todo = z.infer<typeof todoSchema>;

@@ -22,7 +22,12 @@ export class MemStorage implements IStorage {
 
   async createTodo(insertTodo: InsertTodo): Promise<Todo> {
     const id = this.currentId++;
-    const todo: Todo = { ...insertTodo, id };
+    const todo: Todo = {
+      id,
+      text: insertTodo.text,
+      completed: insertTodo.completed ?? false,
+      dueDate: insertTodo.dueDate ?? null,
+    };
     this.todos.set(id, todo);
     return todo;
   }
@@ -32,14 +37,14 @@ export class MemStorage implements IStorage {
     if (!existingTodo) {
       throw new Error("Todo not found");
     }
-    // Only update the fields that are provided
-    const updatedTodo = { ...existingTodo };
-    if (updateTodo.text !== undefined) {
-      updatedTodo.text = updateTodo.text;
-    }
-    if (updateTodo.completed !== undefined) {
-      updatedTodo.completed = updateTodo.completed;
-    }
+
+    const updatedTodo: Todo = {
+      ...existingTodo,
+      ...(updateTodo.text !== undefined && { text: updateTodo.text }),
+      ...(updateTodo.completed !== undefined && { completed: updateTodo.completed }),
+      ...(updateTodo.dueDate !== undefined && { dueDate: updateTodo.dueDate }),
+    };
+
     this.todos.set(id, updatedTodo);
     return updatedTodo;
   }
