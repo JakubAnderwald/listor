@@ -2,15 +2,13 @@ import TodoList from "@/components/todo-list";
 import AddTodo from "@/components/add-todo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Todo } from "@shared/schema";
-import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
 import { firebaseDB } from "@/lib/firebase";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
 export default function Home() {
-  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const queryClient = useQueryClient();
   const { signOut } = useAuth();
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
@@ -24,12 +22,6 @@ export default function Home() {
       queryClient.setQueryData(["/api/todos"], updatedTodos);
     });
   }, [queryClient]);
-
-  const filteredTodos = todos.filter((todo) => {
-    if (filter === "active") return !todo.completed;
-    if (filter === "completed") return todo.completed;
-    return true;
-  });
 
   const activeTodos = todos.filter((todo) => !todo.completed).length;
 
@@ -57,22 +49,13 @@ export default function Home() {
 
         <AddTodo />
 
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-          <div className="flex items-center justify-between">
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
-            <span className="text-sm text-muted-foreground">
-              {activeTodos} item{activeTodos !== 1 ? "s" : ""} left
-            </span>
-          </div>
+        <div className="flex items-end justify-end">
+          <span className="text-sm text-muted-foreground">
+            {activeTodos} item{activeTodos !== 1 ? "s" : ""} left
+          </span>
+        </div>
 
-          <TabsContent value={filter}>
-            <TodoList todos={filteredTodos} isLoading={isLoading} />
-          </TabsContent>
-        </Tabs>
+        <TodoList todos={todos} isLoading={isLoading} />
       </div>
     </div>
   );
