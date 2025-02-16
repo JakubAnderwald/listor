@@ -64,7 +64,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
   };
 
   const getPriorityColor = (priority: string | undefined) => {
-    if (!priority) return "";
+    if (!priority) return "!text-amber-500 !fill-amber-500 !stroke-amber-500"; // Default to medium priority color
 
     // Convert priority to lowercase for case-insensitive comparison
     const p = priority.toLowerCase();
@@ -76,7 +76,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
       case "low":
         return "!text-emerald-500 !fill-emerald-500 !stroke-emerald-500";
       default:
-        return "";
+        return "!text-amber-500 !fill-amber-500 !stroke-amber-500"; // Default to medium priority color
     }
   };
 

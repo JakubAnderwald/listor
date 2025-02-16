@@ -47,9 +47,9 @@ export default function AddTodo() {
       text: string;
       completed: boolean;
       dueDate: string | null;
-      recurrenceType: keyof typeof RecurrenceType;
+      recurrenceType: "none" | "daily" | "weekly" | "monthly" | "yearly";
       originalDueDate: string | null;
-      priority: keyof typeof PriorityLevel;
+      priority: "low" | "medium" | "high";
     }) => {
       await firebaseDB.createTodo(data);
     },
