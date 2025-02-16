@@ -1,12 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTodoSchema } from "@shared/schema";
+import { insertTodoSchema, RecurrenceType } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarIcon, RotateCw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -22,11 +23,13 @@ export default function AddTodo() {
       text: "",
       completed: false,
       dueDate: null,
+      recurrenceType: RecurrenceType.NONE,
+      originalDueDate: null,
     },
   });
 
   const createTodo = useMutation({
-    mutationFn: async (data: { text: string; completed: boolean; dueDate: string | null }) => {
+    mutationFn: async (data: { text: string; completed: boolean; dueDate: string | null; recurrenceType: string; originalDueDate: string | null }) => {
       await firebaseDB.createTodo(data);
     },
     onSuccess: () => {
@@ -62,7 +65,7 @@ export default function AddTodo() {
           control={form.control}
           name="dueDate"
           render={({ field }) => (
-            <FormItem className="flex-1">
+            <FormItem className="flex-shrink-0">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -85,6 +88,30 @@ export default function AddTodo() {
                   />
                 </PopoverContent>
               </Popover>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="recurrenceType"
+          render={({ field }) => (
+            <FormItem className="flex-shrink-0">
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <RotateCw className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Repeat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={RecurrenceType.NONE}>Never</SelectItem>
+                  <SelectItem value={RecurrenceType.DAILY}>Daily</SelectItem>
+                  <SelectItem value={RecurrenceType.WEEKLY}>Weekly</SelectItem>
+                  <SelectItem value={RecurrenceType.MONTHLY}>Monthly</SelectItem>
+                  <SelectItem value={RecurrenceType.YEARLY}>Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </FormItem>
           )}
         />

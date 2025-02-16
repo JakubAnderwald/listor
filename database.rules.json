@@ -15,6 +15,12 @@
             },
             "dueDate": {
               ".validate": "!newData.exists() || newData.isString()"
+            },
+            "recurrenceType": {
+              ".validate": "!newData.exists() || (newData.isString() && ['none', 'daily', 'weekly', 'monthly', 'yearly'].includes(newData.val()))"
+            },
+            "originalDueDate": {
+              ".validate": "!newData.exists() || newData.isString()"
             }
           }
         }

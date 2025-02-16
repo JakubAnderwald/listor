@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo } from "@shared/schema";
-import { format } from "date-fns";
+import { format, addDays, addMonths, addYears, parseISO } from "date-fns";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,6 +20,23 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Calculate next due date based on recurrence type
+const getNextDueDate = (currentDueDate: string, recurrenceType: string): string => {
+  const date = parseISO(currentDueDate);
+  switch (recurrenceType) {
+    case 'daily':
+      return addDays(date, 1).toISOString();
+    case 'weekly':
+      return addDays(date, 7).toISOString();
+    case 'monthly':
+      return addMonths(date, 1).toISOString();
+    case 'yearly':
+      return addYears(date, 1).toISOString();
+    default:
+      return currentDueDate;
+  }
+};
 
 // Firebase Auth API
 export const firebaseAuth = {
@@ -64,7 +81,9 @@ export const firebaseDB = {
               id: parseInt(key),
               text: value.text || '',
               completed: !!value.completed,
-              dueDate: value.dueDate || null
+              dueDate: value.dueDate || null,
+              recurrenceType: value.recurrenceType || 'none',
+              originalDueDate: value.originalDueDate || null
             });
           }
         });
@@ -82,7 +101,9 @@ export const firebaseDB = {
       const todoData = {
         text: todo.text,
         completed: false,
-        dueDate: todo.dueDate || null
+        dueDate: todo.dueDate || null,
+        recurrenceType: todo.recurrenceType || 'none',
+        originalDueDate: todo.dueDate || null // Store original due date for recurring pattern
       };
 
       const id = Date.now();
@@ -111,10 +132,27 @@ export const firebaseDB = {
         ...currentData,
         ...(todo.text !== undefined && { text: todo.text }),
         ...(todo.completed !== undefined && { completed: todo.completed }),
-        ...(todo.dueDate !== undefined && { dueDate: todo.dueDate })
+        ...(todo.dueDate !== undefined && { dueDate: todo.dueDate }),
+        ...(todo.recurrenceType !== undefined && { recurrenceType: todo.recurrenceType })
       };
 
       await set(todoRef, mergedData);
+
+      // If the todo is marked as completed and it's recurring, create the next occurrence
+      if (todo.completed && mergedData.completed && mergedData.recurrenceType !== 'none' && mergedData.dueDate) {
+        const nextDueDate = getNextDueDate(mergedData.dueDate, mergedData.recurrenceType);
+        const nextTodo = {
+          text: mergedData.text,
+          completed: false,
+          dueDate: nextDueDate,
+          recurrenceType: mergedData.recurrenceType,
+          originalDueDate: mergedData.originalDueDate || mergedData.dueDate
+        };
+
+        const nextId = Date.now();
+        await set(ref(database, `users/${user.uid}/todos/${nextId}`), nextTodo);
+      }
+
       return { id, ...mergedData };
     } catch (error) {
       console.error('Error updating todo:', error);
