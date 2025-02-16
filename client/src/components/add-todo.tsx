@@ -36,9 +36,9 @@ export default function AddTodo() {
       text: "",
       completed: false,
       dueDate: null,
-      recurrenceType: "none",
+      recurrenceType: "none" as const,
       originalDueDate: null,
-      priority: "none",
+      priority: "none" as const,
     },
   });
 
@@ -149,7 +149,7 @@ export default function AddTodo() {
             <FormItem className="flex-shrink-0">
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
               >
                 <SelectTrigger className="w-[140px]">
                   <Flag className={cn("mr-2 h-4 w-4", getPriorityColor(field.value))} />
