@@ -4,6 +4,11 @@ import { insertTodoSchema } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
@@ -16,11 +21,12 @@ export default function AddTodo() {
     defaultValues: {
       text: "",
       completed: false,
+      dueDate: null,
     },
   });
 
   const createTodo = useMutation({
-    mutationFn: async (data: { text: string; completed: boolean }) => {
+    mutationFn: async (data: { text: string; completed: boolean; dueDate: string | null }) => {
       await firebaseDB.createTodo(data);
     },
     onSuccess: () => {
@@ -49,6 +55,36 @@ export default function AddTodo() {
                   autoComplete="off"
                 />
               </FormControl>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dueDate"
+          render={({ field }) => (
+            <FormItem className="flex-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[180px] justify-start text-left font-normal",
+                      !field.value && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {field.value ? format(new Date(field.value), "PPP") : <span>Set due date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value ? new Date(field.value) : undefined}
+                    onSelect={(date) => field.onChange(date ? date.toISOString() : null)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </FormItem>
           )}
         />

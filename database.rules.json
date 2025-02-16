@@ -12,6 +12,9 @@
             },
             "completed": {
               ".validate": "newData.isBoolean()"
+            },
+            "dueDate": {
+              ".validate": "!newData.exists() || newData.isString()"
             }
           }
         }

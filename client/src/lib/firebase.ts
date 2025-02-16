@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo } from "@shared/schema";
+import { format } from "date-fns";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -62,7 +63,8 @@ export const firebaseDB = {
             todos.push({
               id: parseInt(key),
               text: value.text || '',
-              completed: !!value.completed
+              completed: !!value.completed,
+              dueDate: value.dueDate || null
             });
           }
         });
@@ -79,11 +81,11 @@ export const firebaseDB = {
     try {
       const todoData = {
         text: todo.text,
-        completed: false
+        completed: false,
+        dueDate: todo.dueDate || null
       };
 
       const id = Date.now();
-      // Using set() instead of update()
       await set(ref(database, `users/${user.uid}/todos/${id}`), todoData);
       return { ...todoData, id };
     } catch (error) {
@@ -97,10 +99,7 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to update todos');
 
     try {
-      // Get the todo ref
       const todoRef = ref(database, `users/${user.uid}/todos/${id}`);
-
-      // Get current data first
       const snapshot = await get(todoRef);
       const currentData = snapshot.val();
 
@@ -108,11 +107,11 @@ export const firebaseDB = {
         throw new Error(`Todo with id ${id} not found`);
       }
 
-      // Merge current data with updates, only for fields that are provided
       const mergedData = {
         ...currentData,
         ...(todo.text !== undefined && { text: todo.text }),
-        ...(todo.completed !== undefined && { completed: todo.completed })
+        ...(todo.completed !== undefined && { completed: todo.completed }),
+        ...(todo.dueDate !== undefined && { dueDate: todo.dueDate })
       };
 
       await set(todoRef, mergedData);
