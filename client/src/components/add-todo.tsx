@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTodoSchema, RecurrenceType } from "@shared/schema";
+import { insertTodoSchema, RecurrenceType, PriorityLevel } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, RotateCw } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCw, Flag } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -25,6 +25,7 @@ export default function AddTodo() {
       dueDate: null,
       recurrenceType: "none",
       originalDueDate: null,
+      priority: "medium",
     },
   });
 
@@ -35,6 +36,7 @@ export default function AddTodo() {
       dueDate: string | null;
       recurrenceType: keyof typeof RecurrenceType;
       originalDueDate: string | null;
+      priority: keyof typeof PriorityLevel;
     }) => {
       await firebaseDB.createTodo(data);
     },
@@ -121,6 +123,29 @@ export default function AddTodo() {
                   <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="priority"
+          render={({ field }) => (
+            <FormItem className="flex-shrink-0">
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <Flag className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

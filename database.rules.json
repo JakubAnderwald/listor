@@ -39,6 +39,9 @@
             },
             "originalDueDate": {
               ".validate": "!newData.exists() || newData.isString()"
+            },
+            "priority": {
+              ".validate": "!newData.exists() || (newData.isString() && ['low', 'medium', 'high'].includes(newData.val()))"
             }
           }
         }

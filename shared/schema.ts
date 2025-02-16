@@ -11,6 +11,13 @@ export const RecurrenceType = {
   YEARLY: "yearly",
 } as const;
 
+// Define priority levels as an enum
+export const PriorityLevel = {
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+} as const;
+
 export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   text: text("text").notNull(),
@@ -18,6 +25,7 @@ export const todos = pgTable("todos", {
   dueDate: timestamp("due_date"),
   recurrenceType: text("recurrence_type").notNull().default(RecurrenceType.NONE),
   originalDueDate: timestamp("original_due_date"), // To maintain the original pattern
+  priority: text("priority").notNull().default(PriorityLevel.MEDIUM),
 });
 
 // Define a more precise schema for the todo
@@ -34,6 +42,11 @@ export const todoSchema = z.object({
     RecurrenceType.YEARLY,
   ]).default(RecurrenceType.NONE),
   originalDueDate: z.string().nullable(),
+  priority: z.enum([
+    PriorityLevel.LOW,
+    PriorityLevel.MEDIUM,
+    PriorityLevel.HIGH,
+  ]).default(PriorityLevel.MEDIUM),
 });
 
 export const insertTodoSchema = createInsertSchema(todos)
@@ -43,6 +56,7 @@ export const insertTodoSchema = createInsertSchema(todos)
     dueDate: true,
     recurrenceType: true,
     originalDueDate: true,
+    priority: true,
   })
   .extend({
     dueDate: z.string().nullable(),
@@ -56,6 +70,13 @@ export const insertTodoSchema = createInsertSchema(todos)
       errorMap: () => ({ message: "Please select a valid repeat option" })
     }).default("none"),
     originalDueDate: z.string().nullable(),
+    priority: z.enum([
+      "low",
+      "medium",
+      "high"
+    ], {
+      errorMap: () => ({ message: "Please select a valid priority level" })
+    }).default("medium"),
   })
   .refine(
     (data) => {
@@ -75,6 +96,7 @@ export const updateTodoSchema = createInsertSchema(todos)
     dueDate: true,
     recurrenceType: true,
     originalDueDate: true,
+    priority: true,
   })
   .partial()
   .extend({
@@ -87,6 +109,11 @@ export const updateTodoSchema = createInsertSchema(todos)
       RecurrenceType.YEARLY,
     ]).optional(),
     originalDueDate: z.string().nullable().optional(),
+    priority: z.enum([
+      PriorityLevel.LOW,
+      PriorityLevel.MEDIUM,
+      PriorityLevel.HIGH,
+    ]).optional(),
   });
 
 export type InsertTodo = z.infer<typeof insertTodoSchema>;

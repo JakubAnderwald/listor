@@ -1,10 +1,10 @@
-import { type Todo, RecurrenceType } from "@shared/schema";
+import { type Todo, RecurrenceType, PriorityLevel } from "@shared/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Pencil, Trash2, X, Check, Calendar as CalendarIcon, RotateCw } from "lucide-react";
+import { Pencil, Trash2, X, Check, Calendar as CalendarIcon, RotateCw, Flag } from "lucide-react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,8 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
-  const [editRecurrenceType, setEditRecurrenceType] = useState(todo.recurrenceType);
+  const [editRecurrenceType, setEditRecurrenceType] = useState<keyof typeof RecurrenceType>(todo.recurrenceType as keyof typeof RecurrenceType);
+  const [editPriority, setEditPriority] = useState<keyof typeof PriorityLevel>(todo.priority as keyof typeof PriorityLevel);
   const { toast } = useToast();
 
   const isOverdue = todo.dueDate && isBefore(new Date(todo.dueDate), startOfDay(new Date()));
@@ -57,6 +58,19 @@ export default function TodoItem({ todo }: TodoItemProps) {
         return "Repeats monthly";
       case "yearly":
         return "Repeats yearly";
+      default:
+        return "";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "text-red-500";
+      case "medium":
+        return "text-yellow-500";
+      case "low":
+        return "text-green-500";
       default:
         return "";
     }
@@ -98,7 +112,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
           </Popover>
           <Select
             value={editRecurrenceType}
-            onValueChange={setEditRecurrenceType}
+            onValueChange={(value: keyof typeof RecurrenceType) => setEditRecurrenceType(value)}
           >
             <SelectTrigger className="w-[140px]">
               <RotateCw className="mr-2 h-4 w-4" />
@@ -112,6 +126,20 @@ export default function TodoItem({ todo }: TodoItemProps) {
               <SelectItem value="yearly">Yearly</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={editPriority}
+            onValueChange={(value: keyof typeof PriorityLevel) => setEditPriority(value)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <Flag className={cn("mr-2 h-4 w-4", getPriorityColor(editPriority))} />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="ghost"
             size="icon"
@@ -121,6 +149,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
                   text: editText.trim(),
                   dueDate: editDueDate,
                   recurrenceType: editRecurrenceType,
+                  priority: editPriority,
                 });
               }
             }}
@@ -134,7 +163,8 @@ export default function TodoItem({ todo }: TodoItemProps) {
               setIsEditing(false);
               setEditText(todo.text);
               setEditDueDate(todo.dueDate);
-              setEditRecurrenceType(todo.recurrenceType as string);
+              setEditRecurrenceType(todo.recurrenceType as keyof typeof RecurrenceType);
+              setEditPriority(todo.priority as keyof typeof PriorityLevel);
             }}
           >
             <X className="h-4 w-4" />
@@ -143,15 +173,18 @@ export default function TodoItem({ todo }: TodoItemProps) {
       ) : (
         <>
           <div className="flex flex-1 flex-col">
-            <span
-              className={cn(
-                todo.completed && "text-muted-foreground line-through",
-                isOverdue && !todo.completed && "text-destructive font-medium"
-              )}
-              onDoubleClick={() => setIsEditing(true)}
-            >
-              {todo.text}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  todo.completed && "text-muted-foreground line-through",
+                  isOverdue && !todo.completed && "text-destructive font-medium"
+                )}
+                onDoubleClick={() => setIsEditing(true)}
+              >
+                {todo.text}
+              </span>
+              <Flag className={cn("h-4 w-4", getPriorityColor(todo.priority))} />
+            </div>
             <div className="flex gap-2 items-center">
               {todo.dueDate && (
                 <span className={cn(
