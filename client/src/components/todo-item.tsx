@@ -197,7 +197,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
               {todo.recurrenceType !== RecurrenceType.NONE && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <RotateCw className="h-3 w-3" />
-                  {getRecurrenceText(todo.recurrenceType as string)}
+                  {getRecurrenceText(todo.recurrenceType)}
                 </span>
               )}
             </div>
