@@ -9,13 +9,25 @@ npm install
 
 3. Configure Firebase:
    - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Enable Google Authentication in the Authentication section
-   - Enable Realtime Database
-   - Set up the security rules by copying the contents of `database.rules.json`
-   - Create a new web app in your Firebase project
-   - Copy the Firebase configuration
+   - Enable Google Authentication:
+     1. Go to Authentication > Sign-in method
+     2. Enable Google sign-in
+     3. Configure OAuth consent screen
+     4. Add authorized domains
+   - Enable Realtime Database:
+     1. Create a new Realtime Database
+     2. Start in test mode
+     3. Copy the database URL
+   - Set up security rules:
+     1. Go to Realtime Database > Rules
+     2. Copy the contents of `database.rules.json`
+     3. Save the rules
+   - Create a web app:
+     1. Go to Project Settings
+     2. Add a web app
+     3. Copy the Firebase configuration
 
-4. Create a `.env` file in the root directory with your Firebase configuration:
+4. Create a `.env` file in the root directory:
 ```env
 VITE_FIREBASE_API_KEY=your-api-key
 VITE_FIREBASE_AUTH_DOMAIN=your-auth-domain
