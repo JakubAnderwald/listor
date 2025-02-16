@@ -64,7 +64,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
   };
 
   const getPriorityColor = (priority: string | undefined) => {
-    if (!priority) return "!text-amber-500 !fill-amber-500 !stroke-amber-500"; // Default to medium priority color
+    if (!priority || priority === "none") return ""; // Return empty string for no priority
 
     // Convert priority to lowercase for case-insensitive comparison
     const p = priority.toLowerCase();
@@ -76,7 +76,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
       case "low":
         return "!text-emerald-500 !fill-emerald-500 !stroke-emerald-500";
       default:
-        return "!text-amber-500 !fill-amber-500 !stroke-amber-500"; // Default to medium priority color
+        return ""; // Return empty string for unknown priorities
     }
   };
 
@@ -139,6 +139,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">None</SelectItem>
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
@@ -187,12 +188,14 @@ export default function TodoItem({ todo }: TodoItemProps) {
               >
                 {todo.text}
               </span>
-              <Flag 
-                className={cn(
-                  "h-4 w-4",
-                  getPriorityColor(todo.priority)
-                )} 
-              />
+              {todo.priority && todo.priority !== "none" && (
+                <Flag
+                  className={cn(
+                    "h-4 w-4",
+                    getPriorityColor(todo.priority)
+                  )}
+                />
+              )}
             </div>
             <div className="flex gap-2 items-center">
               {todo.dueDate && (

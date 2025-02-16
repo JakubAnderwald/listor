@@ -38,7 +38,7 @@ export default function AddTodo() {
       dueDate: null,
       recurrenceType: "none",
       originalDueDate: null,
-      priority: "medium",
+      priority: "none",
     },
   });
 
@@ -49,7 +49,7 @@ export default function AddTodo() {
       dueDate: string | null;
       recurrenceType: "none" | "daily" | "weekly" | "monthly" | "yearly";
       originalDueDate: string | null;
-      priority: "low" | "medium" | "high";
+      priority: "none" | "low" | "medium" | "high";
     }) => {
       await firebaseDB.createTodo(data);
     },
@@ -156,6 +156,7 @@ export default function AddTodo() {
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
