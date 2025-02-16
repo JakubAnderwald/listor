@@ -13,6 +13,7 @@ export const RecurrenceType = {
 
 // Define priority levels as an enum
 export const PriorityLevel = {
+  NONE: "none",
   LOW: "low",
   MEDIUM: "medium",
   HIGH: "high",
@@ -43,10 +44,11 @@ export const todoSchema = z.object({
   ]).default(RecurrenceType.NONE),
   originalDueDate: z.string().nullable(),
   priority: z.enum([
+    PriorityLevel.NONE,
     PriorityLevel.LOW,
     PriorityLevel.MEDIUM,
     PriorityLevel.HIGH,
-  ]).default(PriorityLevel.MEDIUM),
+  ]).default(PriorityLevel.NONE),
 });
 
 export const insertTodoSchema = createInsertSchema(todos)
@@ -71,12 +73,13 @@ export const insertTodoSchema = createInsertSchema(todos)
     }).default("none"),
     originalDueDate: z.string().nullable(),
     priority: z.enum([
+      "none",
       "low",
       "medium",
       "high"
     ], {
       errorMap: () => ({ message: "Please select a valid priority level" })
-    }).default("medium"),
+    }).default("none"),
   })
   .refine(
     (data) => {
