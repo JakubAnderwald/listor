@@ -6,14 +6,21 @@ import { useEffect } from "react";
 import { firebaseDB } from "@/lib/firebase";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 
 export default function Home() {
   const queryClient = useQueryClient();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { data: todos = [], isLoading } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
     initialData: [],
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ["userProfile"],
+    queryFn: () => firebaseDB.getUserProfile(),
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -37,14 +44,29 @@ export default function Home() {
               A simple, modern todo application
             </p>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={signOut}
-            className="ml-4"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-4">
+            {profile && (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium">{profile.displayName}</p>
+                  <p className="text-xs text-muted-foreground">{profile.email}</p>
+                </div>
+                <Avatar>
+                  <AvatarImage src={profile.photoURL} alt={profile.displayName} />
+                  <AvatarFallback>
+                    {profile.displayName?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={signOut}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         <AddTodo />
