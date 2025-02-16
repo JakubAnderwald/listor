@@ -124,7 +124,8 @@ export const firebaseDB = {
               completed: !!value.completed,
               dueDate: value.dueDate || null,
               recurrenceType: value.recurrenceType || 'none',
-              originalDueDate: value.originalDueDate || null
+              originalDueDate: value.originalDueDate || null,
+              priority: value.priority || 'medium' // Add default priority if not set
             });
           }
         });
@@ -144,7 +145,8 @@ export const firebaseDB = {
         completed: false,
         dueDate: todo.dueDate || null,
         recurrenceType: todo.recurrenceType || 'none',
-        originalDueDate: todo.dueDate || null // Store original due date for recurring pattern
+        originalDueDate: todo.dueDate || null, // Store original due date for recurring pattern
+        priority: todo.priority || 'medium' // Add priority field with default value
       };
 
       const id = Date.now();
@@ -174,7 +176,8 @@ export const firebaseDB = {
         ...(todo.text !== undefined && { text: todo.text }),
         ...(todo.completed !== undefined && { completed: todo.completed }),
         ...(todo.dueDate !== undefined && { dueDate: todo.dueDate }),
-        ...(todo.recurrenceType !== undefined && { recurrenceType: todo.recurrenceType })
+        ...(todo.recurrenceType !== undefined && { recurrenceType: todo.recurrenceType }),
+        ...(todo.priority !== undefined && { priority: todo.priority }) // Add priority field to updates
       };
 
       await set(todoRef, mergedData);
@@ -187,7 +190,8 @@ export const firebaseDB = {
           completed: false,
           dueDate: nextDueDate,
           recurrenceType: mergedData.recurrenceType,
-          originalDueDate: mergedData.originalDueDate || mergedData.dueDate
+          originalDueDate: mergedData.originalDueDate || mergedData.dueDate,
+          priority: mergedData.priority // Keep the same priority for recurring tasks
         };
 
         const nextId = Date.now();
