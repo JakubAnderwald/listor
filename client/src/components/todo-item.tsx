@@ -21,7 +21,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
-  const [editRecurrenceType, setEditRecurrenceType] = useState<keyof typeof RecurrenceType>(todo.recurrenceType);
+  const [editRecurrenceType, setEditRecurrenceType] = useState(todo.recurrenceType);
   const { toast } = useToast();
 
   const isOverdue = todo.dueDate && isBefore(new Date(todo.dueDate), startOfDay(new Date()));
@@ -47,15 +47,15 @@ export default function TodoItem({ todo }: TodoItemProps) {
     },
   });
 
-  const getRecurrenceText = (type: keyof typeof RecurrenceType) => {
+  const getRecurrenceText = (type: string) => {
     switch (type) {
-      case "DAILY":
+      case "daily":
         return "Repeats daily";
-      case "WEEKLY":
+      case "weekly":
         return "Repeats weekly";
-      case "MONTHLY":
+      case "monthly":
         return "Repeats monthly";
-      case "YEARLY":
+      case "yearly":
         return "Repeats yearly";
       default:
         return "";
@@ -98,18 +98,18 @@ export default function TodoItem({ todo }: TodoItemProps) {
           </Popover>
           <Select
             value={editRecurrenceType}
-            onValueChange={(value: keyof typeof RecurrenceType) => setEditRecurrenceType(value)}
+            onValueChange={setEditRecurrenceType}
           >
             <SelectTrigger className="w-[140px]">
               <RotateCw className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="NONE">Never</SelectItem>
-              <SelectItem value="DAILY">Daily</SelectItem>
-              <SelectItem value="WEEKLY">Weekly</SelectItem>
-              <SelectItem value="MONTHLY">Monthly</SelectItem>
-              <SelectItem value="YEARLY">Yearly</SelectItem>
+              <SelectItem value="none">Never</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="yearly">Yearly</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -134,7 +134,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
               setIsEditing(false);
               setEditText(todo.text);
               setEditDueDate(todo.dueDate);
-              setEditRecurrenceType(todo.recurrenceType as keyof typeof RecurrenceType);
+              setEditRecurrenceType(todo.recurrenceType as string);
             }}
           >
             <X className="h-4 w-4" />
@@ -164,7 +164,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
               {todo.recurrenceType !== RecurrenceType.NONE && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <RotateCw className="h-3 w-3" />
-                  {getRecurrenceText(todo.recurrenceType as keyof typeof RecurrenceType)}
+                  {getRecurrenceText(todo.recurrenceType as string)}
                 </span>
               )}
             </div>

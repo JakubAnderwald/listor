@@ -47,22 +47,23 @@ export const insertTodoSchema = createInsertSchema(todos)
   .extend({
     dueDate: z.string().nullable(),
     recurrenceType: z.enum([
-      RecurrenceType.NONE,
-      RecurrenceType.DAILY,
-      RecurrenceType.WEEKLY,
-      RecurrenceType.MONTHLY,
-      RecurrenceType.YEARLY,
-    ]).default(RecurrenceType.NONE),
+      "none",
+      "daily",
+      "weekly",
+      "monthly",
+      "yearly"
+    ], {
+      errorMap: () => ({ message: "Please select a valid repeat option" })
+    }).default("none"),
     originalDueDate: z.string().nullable(),
   })
   .refine(
     (data) => {
-      // If recurrenceType is not NONE, dueDate must be provided
-      return data.recurrenceType === RecurrenceType.NONE || (data.dueDate !== null && data.dueDate !== undefined);
+      return data.recurrenceType === "none" || (data.dueDate !== null && data.dueDate !== undefined);
     },
     {
       message: "Due date is required for recurring tasks",
-      path: ["dueDate"], // This will highlight the due date field when validation fails
+      path: ["dueDate"],
     }
   );
 

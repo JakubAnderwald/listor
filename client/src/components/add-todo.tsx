@@ -23,7 +23,7 @@ export default function AddTodo() {
       text: "",
       completed: false,
       dueDate: null,
-      recurrenceType: RecurrenceType.NONE,
+      recurrenceType: "none",
       originalDueDate: null,
     },
   });
@@ -50,13 +50,13 @@ export default function AddTodo() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => createTodo.mutate(data))}
-        className="flex gap-2"
+        className="flex flex-wrap gap-2"
       >
         <FormField
           control={form.control}
           name="text"
           render={({ field }) => (
-            <FormItem className="flex-1">
+            <FormItem className="flex-1 min-w-[200px]">
               <FormControl>
                 <Input
                   placeholder="What needs to be done?"
@@ -108,7 +108,7 @@ export default function AddTodo() {
           render={({ field }) => (
             <FormItem className="flex-shrink-0">
               <Select
-                onValueChange={(value: keyof typeof RecurrenceType) => field.onChange(value)}
+                onValueChange={field.onChange}
                 defaultValue={field.value}
               >
                 <SelectTrigger className="w-[140px]">
@@ -116,18 +116,18 @@ export default function AddTodo() {
                   <SelectValue placeholder="Repeat" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NONE">Never</SelectItem>
-                  <SelectItem value="DAILY">Daily</SelectItem>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
-                  <SelectItem value="MONTHLY">Monthly</SelectItem>
-                  <SelectItem value="YEARLY">Yearly</SelectItem>
+                  <SelectItem value="none">Never</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={createTodo.isPending}>
+        <Button type="submit" disabled={createTodo.isPending} className="flex-shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           Add Todo
         </Button>
