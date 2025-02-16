@@ -66,11 +66,11 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "text-red-600 dark:text-red-500";
+        return "text-red-600 fill-red-600 stroke-red-600";
       case "medium":
-        return "text-amber-600 dark:text-amber-500";
+        return "text-amber-600 fill-amber-600 stroke-amber-600";
       case "low":
-        return "text-emerald-600 dark:text-emerald-500";
+        return "text-emerald-600 fill-emerald-600 stroke-emerald-600";
       default:
         return "";
     }
@@ -186,8 +186,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
               <Flag 
                 className={cn(
                   "h-4 w-4",
-                  getPriorityColor(todo.priority),
-                  "!stroke-current" 
+                  getPriorityColor(todo.priority)
                 )} 
               />
             </div>
