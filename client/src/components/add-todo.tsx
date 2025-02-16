@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTodoSchema, RecurrenceType } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -58,6 +58,7 @@ export default function AddTodo() {
                   autoComplete="off"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -68,16 +69,19 @@ export default function AddTodo() {
             <FormItem className="flex-shrink-0">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[180px] justify-start text-left font-normal",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value ? format(new Date(field.value), "PPP") : <span>Set due date</span>}
-                  </Button>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                        !field.value && "text-muted-foreground",
+                        form.formState.errors.dueDate && "border-destructive"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {field.value ? format(new Date(field.value), "PPP") : <span>Set due date</span>}
+                    </Button>
+                  </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
@@ -88,6 +92,7 @@ export default function AddTodo() {
                   />
                 </PopoverContent>
               </Popover>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -112,6 +117,7 @@ export default function AddTodo() {
                   <SelectItem value={RecurrenceType.YEARLY}>Yearly</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
             </FormItem>
           )}
         />

@@ -54,7 +54,17 @@ export const insertTodoSchema = createInsertSchema(todos)
       RecurrenceType.YEARLY,
     ]).default(RecurrenceType.NONE),
     originalDueDate: z.string().nullable(),
-  });
+  })
+  .refine(
+    (data) => {
+      // If recurrenceType is not NONE, dueDate must be provided
+      return data.recurrenceType === RecurrenceType.NONE || (data.dueDate !== null && data.dueDate !== undefined);
+    },
+    {
+      message: "Due date is required for recurring tasks",
+      path: ["dueDate"], // This will highlight the due date field when validation fails
+    }
+  );
 
 // Make all fields optional for updates
 export const updateTodoSchema = createInsertSchema(todos)
