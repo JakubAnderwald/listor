@@ -15,6 +15,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { firebaseDB } from "@/lib/firebase";
 
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case "high":
+      return "text-red-600 dark:text-red-500";
+    case "medium":
+      return "text-amber-600 dark:text-amber-500";
+    case "low":
+      return "text-emerald-600 dark:text-emerald-500";
+    default:
+      return "";
+  }
+};
+
 export default function AddTodo() {
   const { toast } = useToast();
   const form = useForm({
@@ -139,7 +152,7 @@ export default function AddTodo() {
                 defaultValue={field.value}
               >
                 <SelectTrigger className="w-[140px]">
-                  <Flag className="mr-2 h-4 w-4" />
+                  <Flag className={cn("mr-2 h-4 w-4", getPriorityColor(field.value))} />
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
