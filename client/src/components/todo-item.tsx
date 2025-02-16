@@ -10,7 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { firebaseDB } from "@/lib/firebase";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 
 interface TodoItemProps {
   todo: Todo;
@@ -21,6 +21,8 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const [editText, setEditText] = useState(todo.text);
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
   const { toast } = useToast();
+
+  const isOverdue = todo.dueDate && isBefore(new Date(todo.dueDate), startOfDay(new Date()));
 
   const updateTodo = useMutation({
     mutationFn: async (data: Partial<Todo>) => {
@@ -107,13 +109,19 @@ export default function TodoItem({ todo }: TodoItemProps) {
         <>
           <div className="flex flex-1 flex-col">
             <span
-              className={cn(todo.completed && "text-muted-foreground line-through")}
+              className={cn(
+                todo.completed && "text-muted-foreground line-through",
+                isOverdue && !todo.completed && "text-destructive font-medium",
+              )}
               onDoubleClick={() => setIsEditing(true)}
             >
               {todo.text}
             </span>
             {todo.dueDate && (
-              <span className="text-sm text-muted-foreground">
+              <span className={cn(
+                "text-sm",
+                isOverdue && !todo.completed ? "text-destructive" : "text-muted-foreground"
+              )}>
                 Due: {format(new Date(todo.dueDate), "PPP")}
               </span>
             )}
