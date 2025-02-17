@@ -31,9 +31,12 @@ export default function Home() {
   }, [queryClient]);
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="mx-auto max-w-3xl space-y-8 pt-12">
-        <div className="flex justify-end">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl p-4">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-4xl font-bold text-transparent">
+            Listor
+          </h1>
           {profile && (
             <div className="flex items-center gap-3">
               <div className="text-right">
@@ -57,18 +60,10 @@ export default function Home() {
           )}
         </div>
 
-        <div className="text-center">
-          <h1 className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-4xl font-bold text-transparent sm:text-6xl">
-            Listor
-          </h1>
-          <p className="mt-4 text-muted-foreground">
-            A simple, modern todo application
-          </p>
+        <div className="space-y-6">
+          <AddTodo />
+          <TodoList todos={todos} isLoading={isLoading} />
         </div>
-
-        <AddTodo />
-
-        <TodoList todos={todos} isLoading={isLoading} />
       </div>
     </div>
   );

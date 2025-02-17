@@ -1,12 +1,12 @@
 import { type Todo } from "@shared/schema";
 import TodoItem from "./todo-item";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isWithinInterval, startOfDay, addDays, parseISO, isBefore } from "date-fns";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface TodoListProps {
   todos: Todo[];
@@ -19,10 +19,17 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full" />
-        ))}
+      <div className="grid grid-cols-[250px_1fr] gap-6">
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -88,72 +95,87 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
     next7days: filterTodos("next7days").activeTodos.length
   };
 
+  const filters = [
+    { id: 'all', label: 'All' },
+    { id: 'active', label: 'Active' },
+    { id: 'completed', label: 'Completed' },
+    { id: 'today', label: 'Today' },
+    { id: 'next7days', label: 'Next 7 Days' }
+  ];
+
+  const { activeTodos, completedTodos } = filterTodos(currentFilter);
+  const hasActiveTodos = activeTodos.length > 0;
+  const hasCompletedTodos = completedTodos.length > 0;
+
   return (
-    <div className="space-y-4">
-      <Tabs defaultValue="next7days" className="w-full" onValueChange={setCurrentFilter}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">All ({filterCounts.all})</TabsTrigger>
-          <TabsTrigger value="active">Active ({filterCounts.active})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({filterCounts.completed})</TabsTrigger>
-          <TabsTrigger value="today">Today ({filterCounts.today})</TabsTrigger>
-          <TabsTrigger value="next7days">Next 7 Days ({filterCounts.next7days})</TabsTrigger>
-        </TabsList>
+    <div className="grid grid-cols-[250px_1fr] gap-6">
+      {/* Left column - Filters */}
+      <div className="space-y-2">
+        {filters.map((filter) => (
+          <Button
+            key={filter.id}
+            variant={currentFilter === filter.id ? "default" : "ghost"}
+            className={cn(
+              "w-full justify-start",
+              currentFilter === filter.id && "bg-primary"
+            )}
+            onClick={() => setCurrentFilter(filter.id)}
+          >
+            <span className="flex-1 text-left">{filter.label}</span>
+            <span className="text-sm text-muted-foreground">
+              ({filterCounts[filter.id as keyof typeof filterCounts]})
+            </span>
+          </Button>
+        ))}
+      </div>
 
-        {["all", "active", "completed", "today", "next7days"].map((filter) => {
-          const { activeTodos, completedTodos } = filterTodos(filter);
-          const hasActiveTodos = activeTodos.length > 0;
-          const hasCompletedTodos = completedTodos.length > 0;
+      {/* Right column - Tasks */}
+      <div className="space-y-4">
+        {!hasActiveTodos && !hasCompletedTodos ? (
+          <div className="py-8 text-center text-muted-foreground">
+            No todos to display
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {hasActiveTodos && (
+              <div className="space-y-2">
+                {activeTodos.map((todo) => (
+                  <TodoItem key={todo.id} todo={todo} />
+                ))}
+              </div>
+            )}
 
-          return (
-            <TabsContent key={filter} value={filter} className="mt-4">
-              {!hasActiveTodos && !hasCompletedTodos ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  No todos to display
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {hasActiveTodos && (
-                    <div className="space-y-2">
-                      {activeTodos.map((todo) => (
-                        <TodoItem key={todo.id} todo={todo} />
-                      ))}
-                    </div>
-                  )}
-
-                  {hasCompletedTodos && (
-                    <Collapsible
-                      open={isCompletedOpen}
-                      onOpenChange={setIsCompletedOpen}
-                      className="space-y-2"
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="flex w-full items-center justify-between p-2"
-                        >
-                          <span className="text-sm text-muted-foreground">
-                            Completed ({completedTodos.length})
-                          </span>
-                          {isCompletedOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="space-y-2">
-                        {completedTodos.map((todo) => (
-                          <TodoItem key={todo.id} todo={todo} />
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+            {hasCompletedTodos && (
+              <Collapsible
+                open={isCompletedOpen}
+                onOpenChange={setIsCompletedOpen}
+                className="space-y-2"
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex w-full items-center justify-between p-2"
+                  >
+                    <span className="text-sm text-muted-foreground">
+                      Completed ({completedTodos.length})
+                    </span>
+                    {isCompletedOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2">
+                  {completedTodos.map((todo) => (
+                    <TodoItem key={todo.id} todo={todo} />
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
