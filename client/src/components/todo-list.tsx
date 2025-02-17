@@ -81,6 +81,15 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
 
   const { activeTodos } = filterTodos(currentFilter);
 
+  // Calculate counts for each filter
+  const filterCounts = {
+    all: todos.length,
+    active: todos.filter(todo => !todo.completed).length,
+    completed: todos.filter(todo => todo.completed).length,
+    today: filterTodos("today").activeTodos.length + filterTodos("today").completedTodos.length,
+    next7days: filterTodos("next7days").activeTodos.length + filterTodos("next7days").completedTodos.length
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-end">
@@ -91,11 +100,11 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
 
       <Tabs defaultValue="next7days" className="w-full" onValueChange={setCurrentFilter}>
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="next7days">Next 7 Days</TabsTrigger>
+          <TabsTrigger value="all">All ({filterCounts.all})</TabsTrigger>
+          <TabsTrigger value="active">Active ({filterCounts.active})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({filterCounts.completed})</TabsTrigger>
+          <TabsTrigger value="today">Today ({filterCounts.today})</TabsTrigger>
+          <TabsTrigger value="next7days">Next 7 Days ({filterCounts.next7days})</TabsTrigger>
         </TabsList>
 
         {["all", "active", "completed", "today", "next7days"].map((filter) => {
