@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { firebaseDB } from "@/lib/firebase";
 import type { List } from "@shared/schema";
+import { useEffect } from "react";
 
 const getPriorityColor = (priority: string) => {
   switch (priority) {
@@ -36,6 +37,9 @@ export default function AddTodo() {
     queryFn: () => Promise.resolve([]),  // Lists will be populated by Firebase subscription
   });
 
+  // Find the Inbox list or use the first available list
+  const defaultListId = lists.find(list => list.name === "Inbox")?.id ?? lists[0]?.id ?? 1;
+
   const form = useForm({
     resolver: zodResolver(insertTodoSchema),
     defaultValues: {
@@ -45,9 +49,17 @@ export default function AddTodo() {
       recurrenceType: "none" as const,
       originalDueDate: null,
       priority: "none" as const,
-      listId: lists[0]?.id ?? 1,  // Default to first list or ID 1
+      listId: defaultListId,
     },
   });
+
+  // Update listId when lists change
+  useEffect(() => {
+    const inboxList = lists.find(list => list.name === "Inbox");
+    if (inboxList) {
+      form.setValue("listId", inboxList.id);
+    }
+  }, [lists, form]);
 
   const createTodo = useMutation({
     mutationFn: async (data: {

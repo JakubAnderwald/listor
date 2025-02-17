@@ -53,6 +53,17 @@ export const firebaseAuth = {
           photoURL: result.user.photoURL || '',
           lastLogin: new Date().toISOString(),
         });
+
+        // Create default "Inbox" list if it doesn't exist
+        const listsSnapshot = await get(ref(database, `users/${result.user.uid}/lists`));
+        const lists = listsSnapshot.val();
+
+        if (!lists || !Object.values(lists).some((list: any) => list.name === "Inbox")) {
+          await firebaseDB.createList({
+            name: "Inbox",
+            color: "#6366f1" // Indigo color for inbox
+          });
+        }
       }
 
       return result.user;

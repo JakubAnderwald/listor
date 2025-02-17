@@ -42,6 +42,26 @@ export default function Home() {
       queryClient.setQueryData(["lists"], updatedLists);
     });
 
+    // Move orphaned todos to Inbox list
+    const moveOrphanedTodos = async () => {
+      const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
+      const allLists = queryClient.getQueryData<List[]>(["lists"]) || [];
+      const inboxList = allLists.find(list => list.name === "Inbox");
+
+      if (inboxList) {
+        const orphanedTodos = allTodos.filter(todo => 
+          !allLists.some(list => list.id === todo.listId)
+        );
+
+        for (const todo of orphanedTodos) {
+          await firebaseDB.updateTodo(todo.id, { listId: inboxList.id });
+        }
+      }
+    };
+
+    // Run once when component mounts
+    moveOrphanedTodos();
+
     return () => {
       unsubscribeTodos();
       unsubscribeLists();
