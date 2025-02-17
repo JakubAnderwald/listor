@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertListSchema, type List } from "@shared/schema";
@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -42,6 +44,7 @@ export default function ListSelector({
   filterCounts,
 }: ListSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState<List | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -62,6 +65,22 @@ export default function ListSelector({
     },
     onError: () => {
       toast({ title: "Failed to create list", variant: "destructive" });
+    },
+  });
+
+  const deleteList = useMutation({
+    mutationFn: async (id: number) => {
+      await firebaseDB.deleteList(id);
+    },
+    onSuccess: () => {
+      setListToDelete(null);
+      if (selectedListId === listToDelete?.id) {
+        onListSelect(null);
+      }
+      toast({ title: "List deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete list", variant: "destructive" });
     },
   });
 
@@ -158,24 +177,61 @@ export default function ListSelector({
             All Lists
           </Button>
           {lists.map((list) => (
-            <Button
-              key={list.id}
-              variant={selectedListId === list.id ? "default" : "ghost"}
-              className={cn(
-                "w-full justify-start",
-                selectedListId === list.id && "bg-primary"
+            <div key={list.id} className="flex items-center gap-2">
+              <Button
+                variant={selectedListId === list.id ? "default" : "ghost"}
+                className={cn(
+                  "flex-1 justify-start",
+                  selectedListId === list.id && "bg-primary"
+                )}
+                onClick={() => onListSelect(list.id)}
+              >
+                <div
+                  className="mr-2 h-2 w-2 rounded-full"
+                  style={{ backgroundColor: list.color }}
+                />
+                <span className="flex-1 text-left">{list.name}</span>
+              </Button>
+              {list.name !== "Inbox" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setListToDelete(list)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               )}
-              onClick={() => onListSelect(list.id)}
-            >
-              <div
-                className="mr-2 h-2 w-2 rounded-full"
-                style={{ backgroundColor: list.color }}
-              />
-              <span className="flex-1 text-left">{list.name}</span>
-            </Button>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!listToDelete} onOpenChange={() => setListToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete List</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{listToDelete?.name}"? All tasks in this list will be moved to Inbox.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setListToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => listToDelete && deleteList.mutate(listToDelete.id)}
+              disabled={deleteList.isPending}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
