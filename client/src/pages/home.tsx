@@ -30,8 +30,6 @@ export default function Home() {
     });
   }, [queryClient]);
 
-  const activeTodos = todos.filter((todo) => !todo.completed).length;
-
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="mx-auto max-w-3xl space-y-8 pt-12">
@@ -69,12 +67,6 @@ export default function Home() {
         </div>
 
         <AddTodo />
-
-        <div className="flex items-end justify-end">
-          <span className="text-sm text-muted-foreground">
-            {activeTodos} item{activeTodos !== 1 ? "s" : ""} left
-          </span>
-        </div>
 
         <TodoList todos={todos} isLoading={isLoading} />
       </div>

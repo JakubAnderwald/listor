@@ -15,6 +15,7 @@ interface TodoListProps {
 
 export default function TodoList({ todos, isLoading }: TodoListProps) {
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
+  const [currentFilter, setCurrentFilter] = useState<string>("next7days");
 
   if (isLoading) {
     return (
@@ -78,9 +79,17 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
     return { activeTodos, completedTodos };
   };
 
+  const { activeTodos } = filterTodos(currentFilter);
+
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="next7days" className="w-full">
+      <div className="flex items-end justify-end">
+        <span className="text-sm text-muted-foreground">
+          {activeTodos.length} item{activeTodos.length !== 1 ? "s" : ""} left
+        </span>
+      </div>
+
+      <Tabs defaultValue="next7days" className="w-full" onValueChange={setCurrentFilter}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
