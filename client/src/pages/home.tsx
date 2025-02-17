@@ -44,28 +44,33 @@ export default function Home() {
 
     // Create Inbox list and move orphaned todos
     const setupInboxList = async () => {
-      // Ensure Inbox list exists
-      const currentLists = queryClient.getQueryData<List[]>(["lists"]) || [];
-      if (!currentLists.some(list => list.name === "Inbox")) {
-        await firebaseDB.createList({
-          name: "Inbox",
-          color: "#6366f1" // Indigo color for inbox
-        });
-        return; // Wait for subscription to update with new list
-      }
+      try {
+        // Check if Inbox list already exists
+        const existingInbox = await firebaseDB.getListByName("Inbox");
 
-      // Move orphaned todos to Inbox
-      const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
-      const inboxList = currentLists.find(list => list.name === "Inbox");
+        if (!existingInbox) {
+          // Create Inbox list only if it doesn't exist
+          await firebaseDB.createList({
+            name: "Inbox",
+            color: "#6366f1" // Indigo color for inbox
+          });
+          return; // Wait for subscription to update with new list
+        }
 
-      if (inboxList) {
+        // Get current lists and todos
+        const currentLists = queryClient.getQueryData<List[]>(["lists"]) || [];
+        const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
+
+        // Move orphaned todos to Inbox
         const orphanedTodos = allTodos.filter(todo => 
           !currentLists.some(list => list.id === todo.listId)
         );
 
         for (const todo of orphanedTodos) {
-          await firebaseDB.updateTodo(todo.id, { listId: inboxList.id });
+          await firebaseDB.updateTodo(todo.id, { listId: existingInbox.id });
         }
+      } catch (error) {
+        console.error('Error setting up Inbox list:', error);
       }
     };
 

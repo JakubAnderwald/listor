@@ -55,10 +55,8 @@ export const firebaseAuth = {
         });
 
         // Create default "Inbox" list if it doesn't exist
-        const listsSnapshot = await get(ref(database, `users/${result.user.uid}/lists`));
-        const lists = listsSnapshot.val();
-
-        if (!lists || !Object.values(lists).some((list: any) => list.name === "Inbox")) {
+        const existingInbox = await firebaseDB.getListByName("Inbox");
+        if (!existingInbox) {
           await firebaseDB.createList({
             name: "Inbox",
             color: "#6366f1" // Indigo color for inbox
@@ -326,5 +324,22 @@ export const firebaseDB = {
       console.error('Error deleting todo:', error);
       throw error;
     }
-  }
+  },
+
+  async getListByName(name: string) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in');
+
+    try {
+      const snapshot = await get(ref(database, `users/${user.uid}/lists`));
+      const lists = snapshot.val();
+      if (!lists) return null;
+
+      const matchingList = Object.entries(lists).find(([_, list]: [string, any]) => list.name === name);
+      return matchingList ? { id: parseInt(matchingList[0]), ...matchingList[1] } : null;
+    } catch (error) {
+      console.error('Error getting list by name:', error);
+      throw error;
+    }
+  },
 };
