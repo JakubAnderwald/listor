@@ -11,15 +11,16 @@ import { cn } from "@/lib/utils";
 interface TodoListProps {
   todos: Todo[];
   isLoading: boolean;
+  showFilters?: boolean;
 }
 
-export default function TodoList({ todos, isLoading }: TodoListProps) {
+export default function TodoList({ todos, isLoading, showFilters = true }: TodoListProps) {
   const [isCompletedOpen, setIsCompletedOpen] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<string>("next7days");
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-[250px_1fr] gap-6">
+      <div className={cn(showFilters && "grid grid-cols-[250px_1fr] gap-6")}>
         <div className="space-y-2">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -107,27 +108,43 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
   const hasActiveTodos = activeTodos.length > 0;
   const hasCompletedTodos = completedTodos.length > 0;
 
-  return (
-    <div className="grid grid-cols-[250px_1fr] gap-6">
-      {/* Left column - Filters */}
-      <div className="space-y-2">
-        {filters.map((filter) => (
-          <Button
-            key={filter.id}
-            variant={currentFilter === filter.id ? "default" : "ghost"}
-            className={cn(
-              "w-full justify-start",
-              currentFilter === filter.id && "bg-primary"
-            )}
-            onClick={() => setCurrentFilter(filter.id)}
-          >
-            <span className="flex-1 text-left">{filter.label}</span>
-            <span className="text-sm text-muted-foreground">
-              ({filterCounts[filter.id as keyof typeof filterCounts]})
-            </span>
-          </Button>
-        ))}
+  if (!showFilters) {
+    return (
+      <div className="space-y-4">
+        {!todos.length ? (
+          <div className="py-8 text-center text-muted-foreground">
+            No todos in this list
+          </div>
+        ) : (
+          todos.map((todo) => <TodoItem key={todo.id} todo={todo} />)
+        )}
       </div>
+    );
+  }
+
+  return (
+    <div className={cn("grid gap-6", showFilters && "grid-cols-[250px_1fr]")}>
+      {/* Left column - Filters */}
+      {showFilters && (
+        <div className="space-y-2">
+          {filters.map((filter) => (
+            <Button
+              key={filter.id}
+              variant={currentFilter === filter.id ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start",
+                currentFilter === filter.id && "bg-primary"
+              )}
+              onClick={() => setCurrentFilter(filter.id)}
+            >
+              <span className="flex-1 text-left">{filter.label}</span>
+              <span className="text-sm text-muted-foreground">
+                ({filterCounts[filter.id as keyof typeof filterCounts]})
+              </span>
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Right column - Tasks */}
       <div className="space-y-4">

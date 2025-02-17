@@ -1,8 +1,9 @@
 import TodoList from "@/components/todo-list";
 import AddTodo from "@/components/add-todo";
+import ListSelector from "@/components/list-selector";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Todo } from "@shared/schema";
-import { useEffect } from "react";
+import { type Todo, type List } from "@shared/schema";
+import { useEffect, useState } from "react";
 import { firebaseDB } from "@/lib/firebase";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,15 @@ import { LogOut } from "lucide-react";
 export default function Home() {
   const queryClient = useQueryClient();
   const { signOut, user } = useAuth();
-  const { data: todos = [], isLoading } = useQuery<Todo[]>({
+  const [selectedListId, setSelectedListId] = useState<number | null>(null);
+
+  const { data: todos = [], isLoading: isLoadingTodos } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
+    initialData: [],
+  });
+
+  const { data: lists = [], isLoading: isLoadingLists } = useQuery<List[]>({
+    queryKey: ["lists"],
     initialData: [],
   });
 
@@ -24,11 +32,27 @@ export default function Home() {
   });
 
   useEffect(() => {
-    // Subscribe to real-time updates
-    firebaseDB.subscribeTodos((updatedTodos) => {
+    // Subscribe to real-time updates for todos and lists
+    const unsubscribeTodos = firebaseDB.subscribeTodos((updatedTodos) => {
       queryClient.setQueryData(["/api/todos"], updatedTodos);
     });
+
+    const unsubscribeLists = firebaseDB.subscribeLists((updatedLists) => {
+      queryClient.setQueryData(["lists"], updatedLists);
+    });
+
+    return () => {
+      unsubscribeTodos();
+      unsubscribeLists();
+    };
   }, [queryClient]);
+
+  // Filter todos based on selected list
+  const filteredTodos = selectedListId
+    ? todos.filter((todo) => todo.listId === selectedListId)
+    : todos;
+
+  const isLoading = isLoadingTodos || isLoadingLists;
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +86,21 @@ export default function Home() {
 
         <div className="space-y-6">
           <AddTodo />
-          <TodoList todos={todos} isLoading={isLoading} />
+          <div className="grid grid-cols-[250px_1fr] gap-6">
+            <div className="space-y-6">
+              <ListSelector
+                lists={lists}
+                selectedListId={selectedListId}
+                onListSelect={setSelectedListId}
+              />
+              <hr className="border-border" />
+              <TodoList
+                todos={filteredTodos}
+                isLoading={isLoading}
+                showFilters
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

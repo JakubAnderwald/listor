@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import type { Todo } from "@shared/schema";
+import type { Todo, List } from "@shared/schema";
 import { format, addDays, addMonths, addYears, parseISO } from "date-fns";
 
 const firebaseConfig = {
@@ -107,6 +107,103 @@ export const firebaseDB = {
     }
   },
 
+  subscribeLists: (callback: (lists: List[]) => void) => {
+    const user = auth.currentUser;
+    if (!user) return () => {};
+
+    return onValue(ref(database, `users/${user.uid}/lists`), (snapshot) => {
+      const data = snapshot.val();
+      const lists: List[] = [];
+
+      if (data) {
+        Object.entries(data).forEach(([key, value]: [string, any]) => {
+          if (value && typeof value === 'object') {
+            lists.push({
+              id: parseInt(key),
+              name: value.name,
+              color: value.color,
+              createdAt: value.createdAt,
+            });
+          }
+        });
+      }
+
+      callback(lists);
+    });
+  },
+
+  async createList(list: Omit<List, 'id' | 'createdAt'>) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to create lists');
+
+    try {
+      const listData = {
+        name: list.name,
+        color: list.color,
+        createdAt: new Date().toISOString(),
+      };
+
+      const id = Date.now();
+      await set(ref(database, `users/${user.uid}/lists/${id}`), listData);
+      return { ...listData, id };
+    } catch (error) {
+      console.error('Error creating list:', error);
+      throw error;
+    }
+  },
+
+  async updateList(id: number, list: Partial<List>) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to update lists');
+
+    try {
+      const listRef = ref(database, `users/${user.uid}/lists/${id}`);
+      const snapshot = await get(listRef);
+      const currentData = snapshot.val();
+
+      if (!currentData) {
+        throw new Error(`List with id ${id} not found`);
+      }
+
+      const mergedData = {
+        ...currentData,
+        ...(list.name !== undefined && { name: list.name }),
+        ...(list.color !== undefined && { color: list.color }),
+      };
+
+      await set(listRef, mergedData);
+      return { id, ...mergedData };
+    } catch (error) {
+      console.error('Error updating list:', error);
+      throw error;
+    }
+  },
+
+  async deleteList(id: number) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to delete lists');
+
+    try {
+      // First, delete all todos in this list
+      const todosSnapshot = await get(ref(database, `users/${user.uid}/todos`));
+      const todos = todosSnapshot.val();
+
+      if (todos) {
+        const deletions = Object.entries(todos)
+          .filter(([_, todo]: [string, any]) => todo.listId === id)
+          .map(([todoId]) => remove(ref(database, `users/${user.uid}/todos/${todoId}`)));
+
+        await Promise.all(deletions);
+      }
+
+      // Then delete the list itself
+      await remove(ref(database, `users/${user.uid}/lists/${id}`));
+    } catch (error) {
+      console.error('Error deleting list:', error);
+      throw error;
+    }
+  },
+
   subscribeTodos: (callback: (todos: Todo[]) => void) => {
     const user = auth.currentUser;
     if (!user) return () => {};
@@ -125,7 +222,8 @@ export const firebaseDB = {
               dueDate: value.dueDate || null,
               recurrenceType: value.recurrenceType || 'none',
               originalDueDate: value.originalDueDate || null,
-              priority: value.priority || 'none' 
+              priority: value.priority || 'none',
+              listId: value.listId
             });
           }
         });
@@ -145,8 +243,9 @@ export const firebaseDB = {
         completed: false,
         dueDate: todo.dueDate || null,
         recurrenceType: todo.recurrenceType || 'none',
-        originalDueDate: todo.dueDate || null, 
-        priority: todo.priority || 'none' 
+        originalDueDate: todo.dueDate || null,
+        priority: todo.priority || 'none',
+        listId: todo.listId
       };
 
       const id = Date.now();
@@ -177,12 +276,12 @@ export const firebaseDB = {
         ...(todo.completed !== undefined && { completed: todo.completed }),
         ...(todo.dueDate !== undefined && { dueDate: todo.dueDate }),
         ...(todo.recurrenceType !== undefined && { recurrenceType: todo.recurrenceType }),
-        ...(todo.priority !== undefined && { priority: todo.priority })
+        ...(todo.priority !== undefined && { priority: todo.priority }),
+        ...(todo.listId !== undefined && { listId: todo.listId })
       };
 
       await set(todoRef, mergedData);
 
-      // If the todo is marked as completed and it's recurring, create the next occurrence
       if (todo.completed && mergedData.completed && mergedData.recurrenceType !== 'none' && mergedData.dueDate) {
         const nextDueDate = getNextDueDate(mergedData.dueDate, mergedData.recurrenceType);
         const nextTodo = {
@@ -191,7 +290,8 @@ export const firebaseDB = {
           dueDate: nextDueDate,
           recurrenceType: mergedData.recurrenceType,
           originalDueDate: mergedData.originalDueDate || mergedData.dueDate,
-          priority: mergedData.priority 
+          priority: mergedData.priority,
+          listId: mergedData.listId
         };
 
         const nextId = Date.now();

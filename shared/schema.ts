@@ -19,17 +19,44 @@ export const PriorityLevel = {
   HIGH: "high",
 } as const;
 
+// Define the List schema
+export const lists = pgTable("lists", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#000000"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const todos = pgTable("todos", {
   id: serial("id").primaryKey(),
   text: text("text").notNull(),
   completed: boolean("completed").notNull().default(false),
   dueDate: timestamp("due_date"),
   recurrenceType: text("recurrence_type").notNull().default(RecurrenceType.NONE),
-  originalDueDate: timestamp("original_due_date"), // To maintain the original pattern
+  originalDueDate: timestamp("original_due_date"),
   priority: text("priority").notNull().default(PriorityLevel.MEDIUM),
+  listId: serial("list_id").notNull(), // Reference to the list this todo belongs to
 });
 
-// Define a more precise schema for the todo
+// List schemas
+export const listSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  color: z.string(),
+  createdAt: z.string(),
+});
+
+export const insertListSchema = createInsertSchema(lists)
+  .pick({
+    name: true,
+    color: true,
+  })
+  .extend({
+    name: z.string().min(1, "List name is required"),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
+  });
+
+// Todo schemas
 export const todoSchema = z.object({
   id: z.number(),
   text: z.string(),
@@ -49,6 +76,7 @@ export const todoSchema = z.object({
     PriorityLevel.MEDIUM,
     PriorityLevel.HIGH,
   ]).default(PriorityLevel.NONE),
+  listId: z.number(),
 });
 
 export const insertTodoSchema = createInsertSchema(todos)
@@ -59,6 +87,7 @@ export const insertTodoSchema = createInsertSchema(todos)
     recurrenceType: true,
     originalDueDate: true,
     priority: true,
+    listId: true,
   })
   .extend({
     dueDate: z.string().nullable(),
@@ -80,6 +109,7 @@ export const insertTodoSchema = createInsertSchema(todos)
     ], {
       errorMap: () => ({ message: "Please select a valid priority level" })
     }).default("none"),
+    listId: z.number(),
   })
   .refine(
     (data) => {
@@ -91,7 +121,6 @@ export const insertTodoSchema = createInsertSchema(todos)
     }
   );
 
-// Make all fields optional for updates
 export const updateTodoSchema = createInsertSchema(todos)
   .pick({
     text: true,
@@ -100,6 +129,7 @@ export const updateTodoSchema = createInsertSchema(todos)
     recurrenceType: true,
     originalDueDate: true,
     priority: true,
+    listId: true,
   })
   .partial()
   .extend({
@@ -119,6 +149,8 @@ export const updateTodoSchema = createInsertSchema(todos)
     ]).optional(),
   });
 
+export type List = z.infer<typeof listSchema>;
+export type InsertList = z.infer<typeof insertListSchema>;
 export type InsertTodo = z.infer<typeof insertTodoSchema>;
 export type UpdateTodo = z.infer<typeof updateTodoSchema>;
 export type Todo = z.infer<typeof todoSchema>;

@@ -22,9 +22,23 @@
             ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
           }
         },
+        "lists": {
+          "$listId": {
+            ".validate": "newData.hasChildren(['name', 'color'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0"
+            },
+            "color": {
+              ".validate": "newData.isString() && newData.val().matches(/^#[0-9A-Fa-f]{6}$/)"
+            },
+            "createdAt": {
+              ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
+            }
+          }
+        },
         "todos": {
           "$todoId": {
-            ".validate": "newData.hasChildren(['text', 'completed'])",
+            ".validate": "newData.hasChildren(['text', 'completed', 'listId'])",
             "text": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
@@ -41,7 +55,10 @@
               ".validate": "!newData.exists() || newData.isString()"
             },
             "priority": {
-              ".validate": "!newData.exists() || (newData.isString() && ['low', 'medium', 'high'].includes(newData.val()))"
+              ".validate": "!newData.exists() || (newData.isString() && ['none', 'low', 'medium', 'high'].includes(newData.val()))"
+            },
+            "listId": {
+              ".validate": "newData.isNumber()"
             }
           }
         }
