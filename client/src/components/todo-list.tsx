@@ -20,17 +20,10 @@ export default function TodoList({ todos, isLoading, showFilters = true }: TodoL
 
   if (isLoading) {
     return (
-      <div className={cn(showFilters && "grid grid-cols-[250px_1fr] gap-6")}>
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <div className="space-y-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
+      <div className="space-y-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full" />
+        ))}
       </div>
     );
   }
@@ -123,30 +116,28 @@ export default function TodoList({ todos, isLoading, showFilters = true }: TodoL
   }
 
   return (
-    <div className={cn("grid gap-6", showFilters && "grid-cols-[250px_1fr]")}>
-      {/* Left column - Filters */}
-      {showFilters && (
-        <div className="space-y-2">
-          {filters.map((filter) => (
-            <Button
-              key={filter.id}
-              variant={currentFilter === filter.id ? "default" : "ghost"}
-              className={cn(
-                "w-full justify-start",
-                currentFilter === filter.id && "bg-primary"
-              )}
-              onClick={() => setCurrentFilter(filter.id)}
-            >
-              <span className="flex-1 text-left">{filter.label}</span>
-              <span className="text-sm text-muted-foreground">
-                ({filterCounts[filter.id as keyof typeof filterCounts]})
-              </span>
-            </Button>
-          ))}
-        </div>
-      )}
+    <div className="space-y-2">
+      {/* Filters row */}
+      <div className="space-y-2">
+        {filters.map((filter) => (
+          <Button
+            key={filter.id}
+            variant={currentFilter === filter.id ? "default" : "ghost"}
+            className={cn(
+              "w-full justify-start",
+              currentFilter === filter.id && "bg-primary"
+            )}
+            onClick={() => setCurrentFilter(filter.id)}
+          >
+            <span className="flex-1 text-left">{filter.label}</span>
+            <span className="text-sm text-muted-foreground">
+              ({filterCounts[filter.id as keyof typeof filterCounts]})
+            </span>
+          </Button>
+        ))}
+      </div>
 
-      {/* Right column - Tasks */}
+      {/* Tasks */}
       <div className="space-y-4">
         {!hasActiveTodos && !hasCompletedTodos ? (
           <div className="py-8 text-center text-muted-foreground">

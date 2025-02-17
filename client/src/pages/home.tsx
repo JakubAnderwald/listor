@@ -87,19 +87,16 @@ export default function Home() {
         <div className="space-y-6">
           <AddTodo />
           <div className="grid grid-cols-[250px_1fr] gap-6">
-            <div className="space-y-6">
-              <ListSelector
-                lists={lists}
-                selectedListId={selectedListId}
-                onListSelect={setSelectedListId}
-              />
-              <hr className="border-border" />
-              <TodoList
-                todos={filteredTodos}
-                isLoading={isLoading}
-                showFilters
-              />
-            </div>
+            <ListSelector
+              lists={lists}
+              selectedListId={selectedListId}
+              onListSelect={setSelectedListId}
+            />
+            <TodoList
+              todos={filteredTodos}
+              isLoading={isLoading}
+              showFilters
+            />
           </div>
         </div>
       </div>
