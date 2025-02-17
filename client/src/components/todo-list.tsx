@@ -79,25 +79,17 @@ export default function TodoList({ todos, isLoading }: TodoListProps) {
     return { activeTodos, completedTodos };
   };
 
-  const { activeTodos } = filterTodos(currentFilter);
-
-  // Calculate counts for each filter
+  // Calculate counts of active todos for each filter
   const filterCounts = {
-    all: todos.length,
+    all: todos.filter(todo => !todo.completed).length,
     active: todos.filter(todo => !todo.completed).length,
-    completed: todos.filter(todo => todo.completed).length,
-    today: filterTodos("today").activeTodos.length + filterTodos("today").completedTodos.length,
-    next7days: filterTodos("next7days").activeTodos.length + filterTodos("next7days").completedTodos.length
+    completed: filterTodos("completed").activeTodos.length,
+    today: filterTodos("today").activeTodos.length,
+    next7days: filterTodos("next7days").activeTodos.length
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-end">
-        <span className="text-sm text-muted-foreground">
-          {activeTodos.length} item{activeTodos.length !== 1 ? "s" : ""} left
-        </span>
-      </div>
-
       <Tabs defaultValue="next7days" className="w-full" onValueChange={setCurrentFilter}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">All ({filterCounts.all})</TabsTrigger>
