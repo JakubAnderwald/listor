@@ -42,15 +42,25 @@ export default function Home() {
       queryClient.setQueryData(["lists"], updatedLists);
     });
 
-    // Move orphaned todos to Inbox list
-    const moveOrphanedTodos = async () => {
+    // Create Inbox list and move orphaned todos
+    const setupInboxList = async () => {
+      // Ensure Inbox list exists
+      const currentLists = queryClient.getQueryData<List[]>(["lists"]) || [];
+      if (!currentLists.some(list => list.name === "Inbox")) {
+        await firebaseDB.createList({
+          name: "Inbox",
+          color: "#6366f1" // Indigo color for inbox
+        });
+        return; // Wait for subscription to update with new list
+      }
+
+      // Move orphaned todos to Inbox
       const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
-      const allLists = queryClient.getQueryData<List[]>(["lists"]) || [];
-      const inboxList = allLists.find(list => list.name === "Inbox");
+      const inboxList = currentLists.find(list => list.name === "Inbox");
 
       if (inboxList) {
         const orphanedTodos = allTodos.filter(todo => 
-          !allLists.some(list => list.id === todo.listId)
+          !currentLists.some(list => list.id === todo.listId)
         );
 
         for (const todo of orphanedTodos) {
@@ -59,14 +69,16 @@ export default function Home() {
       }
     };
 
-    // Run once when component mounts
-    moveOrphanedTodos();
+    // Run setup when component mounts and user is logged in
+    if (user) {
+      setupInboxList();
+    }
 
     return () => {
       unsubscribeTodos();
       unsubscribeLists();
     };
-  }, [queryClient]);
+  }, [queryClient, user]);
 
   // Filter todos based on selected list and current filter
   const filterTodos = () => {
