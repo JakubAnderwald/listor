@@ -28,12 +28,18 @@ interface ListSelectorProps {
   lists: List[];
   selectedListId: number | null;
   onListSelect: (listId: number | null) => void;
+  currentFilter: string;
+  onFilterChange: (filter: string) => void;
+  filterCounts: Record<string, number>;
 }
 
 export default function ListSelector({
   lists,
   selectedListId,
   onListSelect,
+  currentFilter,
+  onFilterChange,
+  filterCounts,
 }: ListSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
@@ -59,82 +65,116 @@ export default function ListSelector({
     },
   });
 
+  const filters = [
+    { id: 'all', label: 'All' },
+    { id: 'active', label: 'Active' },
+    { id: 'completed', label: 'Completed' },
+    { id: 'today', label: 'Today' },
+    { id: 'next7days', label: 'Next 7 Days' }
+  ];
+
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between px-2 py-1.5">
-        <span className="text-sm font-medium">Lists</span>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create new list</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit((data) => createList.mutate(data))}
-                className="space-y-4"
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input placeholder="List name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input type="color" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={createList.isPending}>
-                  Create List
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
-      <div className="space-y-1">
-        <Button
-          variant={selectedListId === null ? "default" : "ghost"}
-          className="w-full justify-start"
-          onClick={() => onListSelect(null)}
-        >
-          All Lists
-        </Button>
-        {lists.map((list) => (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="space-y-2">
+        <span className="text-sm font-medium px-2 py-1.5">Filters</span>
+        {filters.map((filter) => (
           <Button
-            key={list.id}
-            variant={selectedListId === list.id ? "default" : "ghost"}
+            key={filter.id}
+            variant={currentFilter === filter.id ? "default" : "ghost"}
             className={cn(
               "w-full justify-start",
-              selectedListId === list.id && "bg-primary"
+              currentFilter === filter.id && "bg-primary"
             )}
-            onClick={() => onListSelect(list.id)}
+            onClick={() => onFilterChange(filter.id)}
           >
-            <div
-              className="mr-2 h-2 w-2 rounded-full"
-              style={{ backgroundColor: list.color }}
-            />
-            <span className="flex-1 text-left">{list.name}</span>
+            <span className="flex-1 text-left">{filter.label}</span>
+            <span className="text-sm text-muted-foreground">
+              ({filterCounts[filter.id]})
+            </span>
           </Button>
         ))}
+      </div>
+
+      <hr className="border-border" />
+
+      {/* Lists */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-2 py-1.5">
+          <span className="text-sm font-medium">Lists</span>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create new list</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit((data) => createList.mutate(data))}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input placeholder="List name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input type="color" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={createList.isPending}>
+                    Create List
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="space-y-1">
+          <Button
+            variant={selectedListId === null ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => onListSelect(null)}
+          >
+            All Lists
+          </Button>
+          {lists.map((list) => (
+            <Button
+              key={list.id}
+              variant={selectedListId === list.id ? "default" : "ghost"}
+              className={cn(
+                "w-full justify-start",
+                selectedListId === list.id && "bg-primary"
+              )}
+              onClick={() => onListSelect(list.id)}
+            >
+              <div
+                className="mr-2 h-2 w-2 rounded-full"
+                style={{ backgroundColor: list.color }}
+              />
+              <span className="flex-1 text-left">{list.name}</span>
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );

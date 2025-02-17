@@ -9,11 +9,13 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
+import { isWithinInterval, startOfDay, addDays, parseISO, isBefore } from "date-fns";
 
 export default function Home() {
   const queryClient = useQueryClient();
   const { signOut, user } = useAuth();
   const [selectedListId, setSelectedListId] = useState<number | null>(null);
+  const [currentFilter, setCurrentFilter] = useState<string>("next7days");
 
   const { data: todos = [], isLoading: isLoadingTodos } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
@@ -32,7 +34,6 @@ export default function Home() {
   });
 
   useEffect(() => {
-    // Subscribe to real-time updates for todos and lists
     const unsubscribeTodos = firebaseDB.subscribeTodos((updatedTodos) => {
       queryClient.setQueryData(["/api/todos"], updatedTodos);
     });
@@ -47,11 +48,87 @@ export default function Home() {
     };
   }, [queryClient]);
 
-  // Filter todos based on selected list
-  const filteredTodos = selectedListId
-    ? todos.filter((todo) => todo.listId === selectedListId)
-    : todos;
+  // Filter todos based on selected list and current filter
+  const filterTodos = () => {
+    let filteredTodos = selectedListId
+      ? todos.filter((todo) => todo.listId === selectedListId)
+      : todos;
 
+    const today = startOfDay(new Date());
+    const in7Days = addDays(today, 7);
+
+    switch (currentFilter) {
+      case "active":
+        return filteredTodos.filter((todo) => !todo.completed);
+      case "completed":
+        return filteredTodos.filter((todo) => todo.completed);
+      case "today": {
+        const overdueTodos = filteredTodos.filter(
+          (todo) => todo.dueDate && isBefore(parseISO(todo.dueDate), today)
+        );
+        const todayTodos = filteredTodos.filter(
+          (todo) =>
+            todo.dueDate &&
+            isWithinInterval(parseISO(todo.dueDate), {
+              start: today,
+              end: addDays(today, 1),
+            })
+        );
+        return [...overdueTodos, ...todayTodos];
+      }
+      case "next7days": {
+        const overdueTodos = filteredTodos.filter(
+          (todo) => todo.dueDate && isBefore(parseISO(todo.dueDate), today)
+        );
+        const weekTodos = filteredTodos.filter(
+          (todo) =>
+            todo.dueDate &&
+            isWithinInterval(parseISO(todo.dueDate), {
+              start: today,
+              end: in7Days,
+            })
+        );
+        return [...overdueTodos, ...weekTodos];
+      }
+      default:
+        return filteredTodos;
+    }
+  };
+
+  // Calculate counts for each filter
+  const getFilterCounts = () => {
+    const baseTodos = selectedListId
+      ? todos.filter((todo) => todo.listId === selectedListId)
+      : todos;
+
+    const today = startOfDay(new Date());
+    const in7Days = addDays(today, 7);
+
+    return {
+      all: baseTodos.length,
+      active: baseTodos.filter((todo) => !todo.completed).length,
+      completed: baseTodos.filter((todo) => todo.completed).length,
+      today: baseTodos.filter(todo => 
+        !todo.completed && todo.dueDate && 
+        (isBefore(parseISO(todo.dueDate), today) ||
+          isWithinInterval(parseISO(todo.dueDate), {
+            start: today,
+            end: addDays(today, 1),
+          }))
+      ).length,
+      next7days: baseTodos.filter(todo =>
+        !todo.completed && todo.dueDate &&
+        (isBefore(parseISO(todo.dueDate), today) ||
+          isWithinInterval(parseISO(todo.dueDate), {
+            start: today,
+            end: in7Days,
+          }))
+      ).length,
+    };
+  };
+
+  const filteredTodos = filterTodos();
+  const filterCounts = getFilterCounts();
   const isLoading = isLoadingTodos || isLoadingLists;
 
   return (
@@ -91,11 +168,14 @@ export default function Home() {
               lists={lists}
               selectedListId={selectedListId}
               onListSelect={setSelectedListId}
+              currentFilter={currentFilter}
+              onFilterChange={setCurrentFilter}
+              filterCounts={filterCounts}
             />
             <TodoList
               todos={filteredTodos}
               isLoading={isLoading}
-              showFilters
+              showFilters={false}
             />
           </div>
         </div>
