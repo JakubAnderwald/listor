@@ -132,8 +132,7 @@ export const firebaseDB = {
               id: parseInt(key),
               name: value.name,
               color: value.color,
-              createdAt: value.createdAt,
-              sharedWith: value.sharedWith ? Object.values(value.sharedWith) : [],
+              createdAt: value.createdAt
             });
           }
         });
@@ -141,8 +140,34 @@ export const firebaseDB = {
 
       // Get shared lists
       try {
-        const sharedLists = await firebaseDB.getSharedWithMe();
-        lists = [...lists, ...sharedLists];
+        const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
+        const sharedSnapshot = await get(sharedWithMeRef);
+        const sharedData = sharedSnapshot.val();
+
+        if (sharedData) {
+          for (const [ownerUid, sharedLists] of Object.entries(sharedData)) {
+            if (!sharedLists) continue;
+
+            const ownerListsRef = ref(database, `users/${ownerUid}/lists`);
+            const ownerListsSnapshot = await get(ownerListsRef);
+            const ownerListsData = ownerListsSnapshot.val();
+
+            if (ownerListsData) {
+              for (const [listId, list] of Object.entries(ownerListsData)) {
+                // Only add the list if it's actually shared with the user
+                if (sharedLists[listId] && list) {
+                  lists.push({
+                    id: parseInt(listId),
+                    name: `${list.name} (Shared)`,
+                    color: list.color,
+                    createdAt: list.createdAt,
+                    sharedBy: ownerUid
+                  });
+                }
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching shared lists:', error);
       }
@@ -372,7 +397,7 @@ export const firebaseDB = {
       // Add email to sharedWith
       await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
 
-      // Find user by email to create notification
+      // Find user by email to create notification and shared reference
       const usersRef = ref(database, 'users');
       const emailQuery = query(
         usersRef,
@@ -385,9 +410,12 @@ export const firebaseDB = {
 
       if (userData) {
         const targetUserId = Object.keys(userData)[0];
-        const notificationId = Date.now();
 
-        // Create notification for the target user
+        // Create shared reference
+        await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
+
+        const notificationId = Date.now();
+        // Create notification
         await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
           type: 'list_shared',
           message: `${user.displayName} shared the list "${listData.name}" with you`,
