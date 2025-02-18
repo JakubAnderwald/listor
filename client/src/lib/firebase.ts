@@ -372,9 +372,34 @@ export const firebaseDB = {
       // Add email to sharedWith
       await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
 
-      // Create a reference in the shared user's sharedWithMe node
-      const sharedRef = ref(database, `users/${user.uid}/sharedWithMe/${user.uid}/${listId}`);
-      await set(sharedRef, true);
+      // Find user by email to create notification
+      const usersRef = ref(database, 'users');
+      const emailQuery = query(
+        usersRef,
+        orderByChild('profile/email'),
+        equalTo(email)
+      );
+
+      const userSnapshot = await get(emailQuery);
+      const userData = userSnapshot.val();
+
+      if (userData) {
+        const targetUserId = Object.keys(userData)[0];
+        const notificationId = Date.now();
+
+        // Create notification for the target user
+        await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
+          type: 'list_shared',
+          message: `${user.displayName} shared the list "${listData.name}" with you`,
+          createdAt: new Date().toISOString(),
+          read: false,
+          listId: listId,
+          fromUser: {
+            uid: user.uid,
+            displayName: user.displayName
+          }
+        });
+      }
 
       return { success: true };
     } catch (error) {
@@ -438,6 +463,40 @@ export const firebaseDB = {
       return sharedLists;
     } catch (error) {
       console.error('Error getting shared lists:', error);
+      throw error;
+    }
+  },
+  subscribeNotifications: (callback: (notifications: any[]) => void) => {
+    const user = auth.currentUser;
+    if (!user) return () => {};
+
+    return onValue(ref(database, `users/${user.uid}/notifications`), (snapshot) => {
+      const data = snapshot.val();
+      const notifications: any[] = [];
+
+      if (data) {
+        Object.entries(data).forEach(([key, value]: [string, any]) => {
+          if (value && typeof value === 'object') {
+            notifications.push({
+              id: parseInt(key),
+              ...value
+            });
+          }
+        });
+      }
+
+      callback(notifications.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    });
+  },
+
+  async markNotificationAsRead(notificationId: number) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in');
+
+    try {
+      await set(ref(database, `users/${user.uid}/notifications/${notificationId}/read`), true);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
       throw error;
     }
   },

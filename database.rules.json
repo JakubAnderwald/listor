@@ -41,6 +41,29 @@
             }
           }
         },
+        "notifications": {
+          "$notificationId": {
+            ".validate": "newData.hasChildren(['type', 'message', 'createdAt', 'read'])",
+            "type": {
+              ".validate": "newData.isString() && ['list_shared'].includes(newData.val())"
+            },
+            "message": {
+              ".validate": "newData.isString()"
+            },
+            "createdAt": {
+              ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
+            },
+            "read": {
+              ".validate": "newData.isBoolean()"
+            },
+            "listId": {
+              ".validate": "newData.isNumber()"
+            },
+            "fromUser": {
+              ".validate": "newData.hasChildren(['uid', 'displayName'])"
+            }
+          }
+        },
         "todos": {
           "$todoId": {
             ".validate": "newData.hasChildren(['text', 'completed', 'listId'])",

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 import { isWithinInterval, startOfDay, addDays, parseISO, isBefore } from "date-fns";
+import { Notifications } from "@/components/notifications";
 
 export default function Home() {
   const queryClient = useQueryClient();
@@ -49,15 +50,15 @@ export default function Home() {
         if (!existingInbox) {
           await firebaseDB.createList({
             name: "Inbox",
-            color: "#6366f1" 
+            color: "#6366f1"
           });
-          return; 
+          return;
         }
 
         const currentLists = queryClient.getQueryData<List[]>(["lists"]) || [];
         const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
 
-        const orphanedTodos = allTodos.filter(todo => 
+        const orphanedTodos = allTodos.filter(todo =>
           !currentLists.some(list => list.id === todo.listId)
         );
 
@@ -149,8 +150,8 @@ export default function Home() {
       all: todos.length,
       active: todos.filter((todo) => !todo.completed).length,
       completed: todos.filter((todo) => todo.completed).length,
-      today: todos.filter(todo => 
-        !todo.completed && todo.dueDate && 
+      today: todos.filter(todo =>
+        !todo.completed && todo.dueDate &&
         (isBefore(parseISO(todo.dueDate), today) ||
           isWithinInterval(parseISO(todo.dueDate), {
             start: today,
@@ -186,6 +187,7 @@ export default function Home() {
           </h1>
           {profile && (
             <div className="flex items-center gap-3">
+              <Notifications />
               <div className="text-right">
                 <p className="text-sm font-medium">{profile.displayName}</p>
                 <p className="text-xs text-muted-foreground">{profile.email}</p>
