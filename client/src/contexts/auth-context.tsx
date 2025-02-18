@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { firebaseAuth } from "@/lib/firebase";
 import type { User } from "firebase/auth";
+import { firebaseDB } from "@/lib/firebase"; // Assuming firebaseDB is imported correctly
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
       setUser(user);
       setIsLoading(false);
+
+      // Clean up any incorrect shared references when user logs in
+      if (user) {
+        firebaseDB.cleanupSharedReferences().catch(console.error);
+      }
     });
 
     return () => unsubscribe();

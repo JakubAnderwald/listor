@@ -405,6 +405,11 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to share lists');
 
     try {
+      // Prevent sharing with yourself
+      if (email === user.email) {
+        throw new Error('Cannot share a list with yourself');
+      }
+
       // Normalize email by replacing '.' with '_' for Firebase path
       const normalizedEmail = email.replace(/\./g, '_');
 
@@ -436,6 +441,11 @@ export const firebaseDB = {
       }
 
       const targetUserId = Object.keys(userData)[0];
+
+      // Prevent creating circular references
+      if (targetUserId === user.uid) {
+        throw new Error('Cannot share a list with yourself');
+      }
 
       // Create shared reference
       await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
@@ -553,4 +563,38 @@ export const firebaseDB = {
       throw error;
     }
   },
+  async cleanupSharedReferences() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      // Remove any self-references in sharedWithMe
+      const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe/${user.uid}`);
+      await remove(sharedWithMeRef);
+
+      // Remove self email from sharedWith in own lists
+      const listsRef = ref(database, `users/${user.uid}/lists`);
+      const snapshot = await get(listsRef);
+      const lists = snapshot.val();
+
+      if (lists) {
+        const normalizedEmail = user.email?.replace(/\./g, '_');
+        if (normalizedEmail) {
+          const updates: Record<string, null> = {};
+
+          Object.keys(lists).forEach(listId => {
+            if (lists[listId].sharedWith?.[normalizedEmail]) {
+              updates[`users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`] = null;
+            }
+          });
+
+          if (Object.keys(updates).length > 0) {
+            await set(ref(database), updates);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error cleaning up shared references:', error);
+    }
+  }
 };
