@@ -493,6 +493,16 @@ export const firebaseDB = {
         throw new Error('List not found');
       }
 
+      // Verify the list is actually shared with this user
+      const normalizedEmail = email.replace(/\./g, '_');
+      const sharedWithRef = ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`);
+      const sharedWithSnapshot = await get(sharedWithRef);
+
+      if (!sharedWithSnapshot.exists()) {
+        console.error('List is not shared with this user:', email);
+        throw new Error('List is not shared with this user');
+      }
+
       // Find user by email to remove shared reference
       const usersRef = ref(database, 'users');
       const userSnapshot = await get(usersRef);
@@ -513,17 +523,7 @@ export const firebaseDB = {
 
       if (!targetUserId) {
         console.error('Target user not found for email:', email);
-        throw new Error('User not found');
-      }
-
-      // Verify the list is actually shared with this user
-      const normalizedEmail = email.replace(/\./g, '_');
-      const sharedWithRef = ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`);
-      const sharedWithSnapshot = await get(sharedWithRef);
-
-      if (!sharedWithSnapshot.exists()) {
-        console.error('List is not shared with this user:', email);
-        throw new Error('List is not shared with this user');
+        throw new Error('Target user not found');
       }
 
       // Remove from sharedWith
