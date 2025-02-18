@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, get, remove, query, orderByChild, equalTo } from "firebase/database";
+import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo, List } from "@shared/schema";
 import { format, addDays, addMonths, addYears, parseISO } from "date-fns";
@@ -400,6 +400,7 @@ export const firebaseDB = {
     }
   },
 
+  // Update the shareList function to fix the user lookup
   async shareList(listId: number, email: string) {
     const user = auth.currentUser;
     if (!user) throw new Error('Must be logged in to share lists');
@@ -410,9 +411,6 @@ export const firebaseDB = {
         throw new Error('Cannot share a list with yourself');
       }
 
-      // Normalize email by replacing '.' with '_' for Firebase path
-      const normalizedEmail = email.replace(/\./g, '_');
-
       // Get list details
       const listRef = ref(database, `users/${user.uid}/lists/${listId}`);
       const snapshot = await get(listRef);
@@ -422,25 +420,32 @@ export const firebaseDB = {
         throw new Error(`List with id ${listId} not found`);
       }
 
+      // Normalize email by replacing '.' with '_' for Firebase path
+      const normalizedEmail = email.replace(/\./g, '_');
+
       // Add email to sharedWith
       await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
 
       // Find user by email
       const usersRef = ref(database, 'users');
-      const emailQuery = query(
-        usersRef,
-        orderByChild('profile/email'),
-        equalTo(email)
-      );
+      const userSnapshot = await get(usersRef);
+      const users = userSnapshot.val();
 
-      const userSnapshot = await get(emailQuery);
-      const userData = userSnapshot.val();
-
-      if (!userData) {
+      if (!users) {
         throw new Error('User not found');
       }
 
-      const targetUserId = Object.keys(userData)[0];
+      let targetUserId = null;
+      for (const [uid, userData] of Object.entries(users)) {
+        if (userData?.profile?.email === email) {
+          targetUserId = uid;
+          break;
+        }
+      }
+
+      if (!targetUserId) {
+        throw new Error('User not found');
+      }
 
       // Prevent creating circular references
       if (targetUserId === user.uid) {
