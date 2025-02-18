@@ -483,34 +483,55 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to unshare lists');
 
     try {
+      // First verify the list exists and user owns it
+      const listRef = ref(database, `users/${user.uid}/lists/${listId}`);
+      const listSnapshot = await get(listRef);
+      const list = listSnapshot.val();
+
+      if (!list) {
+        console.error('List not found:', listId);
+        throw new Error('List not found');
+      }
+
       // Find user by email to remove shared reference
       const usersRef = ref(database, 'users');
       const userSnapshot = await get(usersRef);
       const users = userSnapshot.val();
 
       if (!users) {
+        console.error('No users found in database');
         throw new Error('User not found');
       }
 
       let targetUserId = null;
       for (const [uid, userData] of Object.entries<any>(users)) {
-        if (userData && userData.profile && userData.profile.email === email) {
+        if (userData?.profile?.email === email) {
           targetUserId = uid;
           break;
         }
       }
 
       if (!targetUserId) {
+        console.error('Target user not found for email:', email);
         throw new Error('User not found');
       }
 
+      // Verify the list is actually shared with this user
       const normalizedEmail = email.replace(/\./g, '_');
+      const sharedWithRef = ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`);
+      const sharedWithSnapshot = await get(sharedWithRef);
+
+      if (!sharedWithSnapshot.exists()) {
+        console.error('List is not shared with this user:', email);
+        throw new Error('List is not shared with this user');
+      }
 
       // Remove from sharedWith
-      await remove(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`));
+      await remove(sharedWithRef);
 
       // Remove from sharedWithMe
-      await remove(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`));
+      const sharedWithMeRef = ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`);
+      await remove(sharedWithMeRef);
 
       return { success: true };
     } catch (error) {

@@ -130,8 +130,12 @@ export default function ListSelector({
     onSuccess: () => {
       toast({ title: "User removed from shared list" });
     },
-    onError: () => {
-      toast({ title: "Failed to remove user", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ 
+        title: "Failed to remove user",
+        description: error.message,
+        variant: "destructive"
+      });
     },
   });
 
@@ -385,7 +389,7 @@ export default function ListSelector({
                       onClick={() => listToShare && unshareList.mutate({ listId: listToShare.id, email })}
                       disabled={unshareList.isPending}
                     >
-                      Remove
+                      {unshareList.isPending ? "Removing..." : "Remove"}
                     </Button>
                   </div>
                 ))}
