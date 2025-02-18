@@ -42,26 +42,21 @@ export default function Home() {
       queryClient.setQueryData(["lists"], updatedLists);
     });
 
-    // Create Inbox list and move orphaned todos
     const setupInboxList = async () => {
       try {
-        // Check if Inbox list already exists
         const existingInbox = await firebaseDB.getListByName("Inbox");
 
         if (!existingInbox) {
-          // Create Inbox list only if it doesn't exist
           await firebaseDB.createList({
             name: "Inbox",
-            color: "#6366f1" // Indigo color for inbox
+            color: "#6366f1" 
           });
-          return; // Wait for subscription to update with new list
+          return; 
         }
 
-        // Get current lists and todos
         const currentLists = queryClient.getQueryData<List[]>(["lists"]) || [];
         const allTodos = queryClient.getQueryData<Todo[]>(["/api/todos"]) || [];
 
-        // Move orphaned todos to Inbox
         const orphanedTodos = allTodos.filter(todo => 
           !currentLists.some(list => list.id === todo.listId)
         );
@@ -74,7 +69,6 @@ export default function Home() {
       }
     };
 
-    // Run setup when component mounts and user is logged in
     if (user) {
       setupInboxList();
     }
@@ -85,17 +79,22 @@ export default function Home() {
     };
   }, [queryClient, user]);
 
-  // Set default list to Inbox when lists are loaded
   useEffect(() => {
-    if (!isLoadingLists && lists.length > 0 && selectedListId === null) {
+    if (!isLoadingLists && lists.length > 0 && selectedListId === null && currentFilter === "all") {
       const inboxList = lists.find(list => list.name === "Inbox");
       if (inboxList) {
         setSelectedListId(inboxList.id);
       }
     }
-  }, [isLoadingLists, lists, selectedListId]);
+  }, [isLoadingLists, lists, selectedListId, currentFilter]);
 
-  // Filter todos based on selected list and current filter
+  const handleListSelect = (listId: number | null) => {
+    setSelectedListId(listId);
+    if (listId !== null) {
+      setCurrentFilter("all");
+    }
+  };
+
   const filterTodos = () => {
     let filteredTodos = selectedListId
       ? todos.filter((todo) => todo.listId === selectedListId)
@@ -142,9 +141,7 @@ export default function Home() {
     }
   };
 
-  // Calculate counts for each filter
   const getFilterCounts = () => {
-    // When calculating filter counts, always use all todos regardless of selected list
     const today = startOfDay(new Date());
     const in7Days = addDays(today, 7);
 
@@ -171,7 +168,6 @@ export default function Home() {
     };
   };
 
-  // Get the Inbox list ID or fallback to the first list
   const getDefaultListId = () => {
     const inboxList = lists.find(list => list.name === "Inbox");
     return selectedListId ?? inboxList?.id ?? lists[0]?.id ?? 1;
@@ -217,7 +213,7 @@ export default function Home() {
             <ListSelector
               lists={lists}
               selectedListId={selectedListId}
-              onListSelect={setSelectedListId}
+              onListSelect={handleListSelect}
               currentFilter={currentFilter}
               onFilterChange={setCurrentFilter}
               filterCounts={filterCounts}

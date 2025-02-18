@@ -144,18 +144,19 @@ export default function ListSelector({
       </div>
 
       <div className="space-y-1">
-        {/* Filters */}
         {filters.map((filter) => (
           <Button
             key={filter.id}
-            variant={currentFilter === filter.id && selectedListId === null ? "default" : "ghost"}
+            variant={selectedListId === null && currentFilter === filter.id ? "default" : "ghost"}
             className={cn(
               "w-full justify-start",
-              currentFilter === filter.id && selectedListId === null && "bg-primary"
+              selectedListId === null && currentFilter === filter.id && "bg-primary"
             )}
             onClick={() => {
-              onFilterChange(filter.id);
-              onListSelect(null);
+              if (selectedListId !== null || currentFilter !== filter.id) {
+                onListSelect(null);
+                onFilterChange(filter.id);
+              }
             }}
           >
             <span className="flex-1 text-left">{filter.label}</span>
@@ -165,7 +166,6 @@ export default function ListSelector({
           </Button>
         ))}
 
-        {/* Lists */}
         {lists.map((list) => (
           <div key={list.id} className="flex items-center gap-2">
             <Button
@@ -174,7 +174,11 @@ export default function ListSelector({
                 "flex-1 justify-start",
                 selectedListId === list.id && "bg-primary"
               )}
-              onClick={() => onListSelect(list.id)}
+              onClick={() => {
+                if (selectedListId !== list.id) {
+                  onListSelect(list.id);
+                }
+              }}
             >
               <div
                 className="mr-2 h-2 w-2 rounded-full"
@@ -195,7 +199,6 @@ export default function ListSelector({
         ))}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!listToDelete} onOpenChange={() => setListToDelete(null)}>
         <DialogContent>
           <DialogHeader>
