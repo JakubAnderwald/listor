@@ -3,6 +3,7 @@ import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo, List } from "@shared/schema";
 import { format, addDays, addMonths, addYears, parseISO } from "date-fns";
+import { emailService } from './email';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -209,6 +210,7 @@ export const firebaseDB = {
         name: list.name,
         color: list.color,
         createdAt: new Date().toISOString(),
+        sharedCount: 0
       };
 
       const id = Date.now();
@@ -445,17 +447,37 @@ export const firebaseDB = {
         }
       }
 
-      if (!targetUserId) {
-        throw new Error('User not found');
+      // Even if the target user doesn't exist in the database yet,
+      // we'll still send them an email notification
+      try {
+        await emailService.sendShareNotification(
+          email,
+          user.displayName || 'A Listor user',
+          listData.name
+        );
+      } catch (error) {
+        console.error('Error sending email notification:', error);
+        // Don't throw here, we still want to complete the share operation
       }
 
-      // Prevent creating circular references
-      if (targetUserId === user.uid) {
-        throw new Error('Cannot share a list with yourself');
-      }
+      // If we found the user in the database, create the shared reference
+      if (targetUserId) {
+        await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
 
-      // Create shared reference
-      await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
+        // Create notification in the database
+        const notificationId = Date.now();
+        await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
+          type: 'list_shared',
+          message: `${user.displayName} shared their list "${listData.name}" with you`,
+          createdAt: new Date().toISOString(),
+          read: false,
+          listId: listId,
+          fromUser: {
+            uid: user.uid,
+            displayName: user.displayName
+          }
+        });
+      }
 
       return { success: true };
     } catch (error) {
