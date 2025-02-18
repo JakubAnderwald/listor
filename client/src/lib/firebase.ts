@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set, get, remove } from "firebase/database";
+import { getDatabase, ref, onValue, set, get, remove, query, orderByChild, equalTo } from "firebase/database";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import type { Todo, List } from "@shared/schema";
 import { format, addDays, addMonths, addYears, parseISO } from "date-fns";
@@ -120,9 +120,10 @@ export const firebaseDB = {
     const user = auth.currentUser;
     if (!user) return () => {};
 
-    return onValue(ref(database, `users/${user.uid}/lists`), (snapshot) => {
+    // Subscribe to own lists
+    const ownListsUnsubscribe = onValue(ref(database, `users/${user.uid}/lists`), async (snapshot) => {
       const data = snapshot.val();
-      const lists: List[] = [];
+      let lists: List[] = [];
 
       if (data) {
         Object.entries(data).forEach(([key, value]: [string, any]) => {
@@ -132,13 +133,24 @@ export const firebaseDB = {
               name: value.name,
               color: value.color,
               createdAt: value.createdAt,
+              sharedWith: value.sharedWith ? Object.values(value.sharedWith) : [],
             });
           }
         });
       }
 
+      // Get shared lists
+      try {
+        const sharedLists = await firebaseDB.getSharedWithMe();
+        lists = [...lists, ...sharedLists];
+      } catch (error) {
+        console.error('Error fetching shared lists:', error);
+      }
+
       callback(lists);
     });
+
+    return ownListsUnsubscribe;
   },
 
   async createList(list: Omit<List, 'id' | 'createdAt'>) {
@@ -339,6 +351,93 @@ export const firebaseDB = {
       return matchingList ? { id: parseInt(matchingList[0]), ...matchingList[1] } : null;
     } catch (error) {
       console.error('Error getting list by name:', error);
+      throw error;
+    }
+  },
+
+  async shareList(listId: number, email: string) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to share lists');
+
+    try {
+      const normalizedEmail = email.replace('.', '_');
+      const listRef = ref(database, `users/${user.uid}/lists/${listId}`);
+      const snapshot = await get(listRef);
+      const listData = snapshot.val();
+
+      if (!listData) {
+        throw new Error(`List with id ${listId} not found`);
+      }
+
+      // Add email to sharedWith
+      await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
+
+      // Create a reference in the shared user's sharedWithMe node
+      const sharedRef = ref(database, `users/${user.uid}/sharedWithMe/${user.uid}/${listId}`);
+      await set(sharedRef, true);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error sharing list:', error);
+      throw error;
+    }
+  },
+
+  async unshareList(listId: number, email: string) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to unshare lists');
+
+    try {
+      const normalizedEmail = email.replace('.', '_');
+      const sharedWithRef = ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`);
+      await remove(sharedWithRef);
+
+      // Remove the reference from the shared user's sharedWithMe node
+      const sharedRef = ref(database, `users/${user.uid}/sharedWithMe/${user.uid}/${listId}`);
+      await remove(sharedRef);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error unsharing list:', error);
+      throw error;
+    }
+  },
+
+  async getSharedWithMe() {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to get shared lists');
+
+    try {
+      const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
+      const snapshot = await get(sharedWithMeRef);
+      const sharedData = snapshot.val();
+
+      if (!sharedData) return [];
+
+      const sharedLists: List[] = [];
+      for (const [ownerUid, lists] of Object.entries(sharedData)) {
+        const listsRef = ref(database, `users/${ownerUid}/lists`);
+        const listsSnapshot = await get(listsRef);
+        const listsData = listsSnapshot.val();
+
+        if (listsData) {
+          Object.entries(listsData).forEach(([listId, list]: [string, any]) => {
+            if (list && typeof list === 'object' && lists[listId]) {
+              sharedLists.push({
+                id: parseInt(listId),
+                name: `${list.name} (Shared)`,
+                color: list.color,
+                createdAt: list.createdAt,
+                sharedBy: ownerUid,
+              });
+            }
+          });
+        }
+      }
+
+      return sharedLists;
+    } catch (error) {
+      console.error('Error getting shared lists:', error);
       throw error;
     }
   },

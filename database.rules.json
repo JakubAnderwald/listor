@@ -33,6 +33,11 @@
             },
             "createdAt": {
               ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
+            },
+            "sharedWith": {
+              "$email": {
+                ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
+              }
             }
           }
         },
@@ -59,6 +64,14 @@
             },
             "listId": {
               ".validate": "newData.isNumber()"
+            }
+          }
+        },
+        "sharedWithMe": {
+          "$ownerUid": {
+            "$listId": {
+              ".read": "auth.token.email === root.child('users').child($ownerUid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).val()",
+              ".write": "auth.token.email === root.child('users').child($ownerUid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).val()"
             }
           }
         }

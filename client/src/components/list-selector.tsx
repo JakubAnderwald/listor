@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Share2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertListSchema, type List } from "@shared/schema";
@@ -25,6 +25,7 @@ import { firebaseDB } from "@/lib/firebase";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 
 interface ListSelectorProps {
   lists: List[];
@@ -35,6 +36,12 @@ interface ListSelectorProps {
   filterCounts: Record<string, number>;
 }
 
+const shareFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+type ShareFormValues = z.infer<typeof shareFormSchema>;
+
 export default function ListSelector({
   lists,
   selectedListId,
@@ -44,7 +51,9 @@ export default function ListSelector({
   filterCounts,
 }: ListSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [listToDelete, setListToDelete] = useState<List | null>(null);
+  const [listToShare, setListToShare] = useState<List | null>(null);
   const { toast } = useToast();
 
   const form = useForm({
@@ -52,6 +61,13 @@ export default function ListSelector({
     defaultValues: {
       name: "",
       color: "#000000",
+    },
+  });
+
+  const shareForm = useForm({
+    resolver: zodResolver(shareFormSchema),
+    defaultValues: {
+      email: "",
     },
   });
 
@@ -81,6 +97,21 @@ export default function ListSelector({
     },
     onError: () => {
       toast({ title: "Failed to delete list", variant: "destructive" });
+    },
+  });
+
+  const shareList = useMutation({
+    mutationFn: async ({ listId, email }: { listId: number; email: string }) => {
+      await firebaseDB.shareList(listId, email);
+    },
+    onSuccess: () => {
+      setIsShareOpen(false);
+      setListToShare(null);
+      shareForm.reset();
+      toast({ title: "List shared successfully" });
+    },
+    onError: () => {
+      toast({ title: "Failed to share list", variant: "destructive" });
     },
   });
 
@@ -185,15 +216,30 @@ export default function ListSelector({
                 style={{ backgroundColor: list.color }}
               />
               <span className="flex-1 text-left">{list.name}</span>
+              {list.sharedBy && (
+                <span className="ml-2 text-xs text-muted-foreground">(Shared)</span>
+              )}
             </Button>
-            {list.name !== "Inbox" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setListToDelete(list)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            {list.name !== "Inbox" && !list.sharedBy && (
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setListToShare(list);
+                    setIsShareOpen(true);
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setListToDelete(list)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             )}
           </div>
         ))}
@@ -222,6 +268,58 @@ export default function ListSelector({
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share List</DialogTitle>
+            <DialogDescription>
+              Enter the email address of the user you want to share "{listToShare?.name}" with.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...shareForm}>
+            <form
+              onSubmit={shareForm.handleSubmit((data) =>
+                listToShare && shareList.mutate({ listId: listToShare.id, email: data.email })
+              )}
+              className="space-y-4"
+            >
+              <FormField
+                control={shareForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        placeholder="user@example.com"
+                        type="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    setIsShareOpen(false);
+                    setListToShare(null);
+                    shareForm.reset();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={shareList.isPending}>
+                  Share
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
