@@ -1,3 +1,7 @@
+git clone https://github.com/JakubAnderwald/listor.git
+cd listor
+```
+
 2. Install dependencies:
 ```bash
 npm install
