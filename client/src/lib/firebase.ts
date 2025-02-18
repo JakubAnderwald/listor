@@ -120,16 +120,27 @@ export const firebaseDB = {
     const user = auth.currentUser;
     if (!user) return () => {};
 
+    // Subscribe to own lists and shared lists
+    const listsRef = ref(database, `users/${user.uid}/lists`);
+    const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
+
+    // Create a map to track unique lists
+    const listsMap = new Map<string, List>();
+
     // Subscribe to own lists
-    const ownListsUnsubscribe = onValue(ref(database, `users/${user.uid}/lists`), async (snapshot) => {
+    const ownListsUnsubscribe = onValue(listsRef, (snapshot) => {
       const data = snapshot.val();
-      let lists: List[] = [];
+
+      // Clear existing own lists from the map
+      listsMap.clear();
 
       if (data) {
         Object.entries(data).forEach(([key, value]: [string, any]) => {
           if (value && typeof value === 'object') {
-            lists.push({
-              id: parseInt(key),
+            const listId = parseInt(key);
+            const uniqueKey = `own_${listId}`;
+            listsMap.set(uniqueKey, {
+              id: listId,
               name: value.name,
               color: value.color,
               createdAt: value.createdAt
@@ -138,25 +149,28 @@ export const firebaseDB = {
         });
       }
 
-      // Get shared lists
-      try {
-        const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
-        const sharedSnapshot = await get(sharedWithMeRef);
-        const sharedData = sharedSnapshot.val();
+      // Trigger callback with current lists
+      callback(Array.from(listsMap.values()));
+    });
 
-        if (sharedData) {
-          for (const [ownerUid, sharedLists] of Object.entries(sharedData)) {
-            if (!sharedLists) continue;
+    // Subscribe to shared lists
+    const sharedListsUnsubscribe = onValue(sharedWithMeRef, async (snapshot) => {
+      const sharedData = snapshot.val();
 
-            const ownerListsRef = ref(database, `users/${ownerUid}/lists`);
-            const ownerListsSnapshot = await get(ownerListsRef);
-            const ownerListsData = ownerListsSnapshot.val();
+      if (sharedData) {
+        for (const [ownerUid, lists] of Object.entries(sharedData)) {
+          if (!lists) continue;
 
-            if (ownerListsData) {
-              for (const [listId, list] of Object.entries(ownerListsData)) {
-                // Only add the list if it's actually shared with the user
-                if (sharedLists[listId] && list) {
-                  lists.push({
+          try {
+            const ownerListsSnapshot = await get(ref(database, `users/${ownerUid}/lists`));
+            const ownerLists = ownerListsSnapshot.val();
+
+            if (ownerLists) {
+              Object.entries(lists).forEach(([listId]) => {
+                const list = ownerLists[listId];
+                if (list) {
+                  const uniqueKey = `shared_${ownerUid}_${listId}`;
+                  listsMap.set(uniqueKey, {
                     id: parseInt(listId),
                     name: `${list.name} (Shared)`,
                     color: list.color,
@@ -164,18 +178,23 @@ export const firebaseDB = {
                     sharedBy: ownerUid
                   });
                 }
-              }
+              });
             }
+          } catch (error) {
+            console.error('Error fetching shared lists:', error);
           }
         }
-      } catch (error) {
-        console.error('Error fetching shared lists:', error);
-      }
 
-      callback(lists);
+        // Trigger callback with updated lists
+        callback(Array.from(listsMap.values()));
+      }
     });
 
-    return ownListsUnsubscribe;
+    // Return cleanup function
+    return () => {
+      ownListsUnsubscribe();
+      sharedListsUnsubscribe();
+    };
   },
 
   async createList(list: Omit<List, 'id' | 'createdAt'>) {
