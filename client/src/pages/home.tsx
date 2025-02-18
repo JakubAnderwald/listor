@@ -144,18 +144,15 @@ export default function Home() {
 
   // Calculate counts for each filter
   const getFilterCounts = () => {
-    const baseTodos = selectedListId
-      ? todos.filter((todo) => todo.listId === selectedListId)
-      : todos;
-
+    // When calculating filter counts, always use all todos regardless of selected list
     const today = startOfDay(new Date());
     const in7Days = addDays(today, 7);
 
     return {
-      all: baseTodos.length,
-      active: baseTodos.filter((todo) => !todo.completed).length,
-      completed: baseTodos.filter((todo) => todo.completed).length,
-      today: baseTodos.filter(todo => 
+      all: todos.length,
+      active: todos.filter((todo) => !todo.completed).length,
+      completed: todos.filter((todo) => todo.completed).length,
+      today: todos.filter(todo => 
         !todo.completed && todo.dueDate && 
         (isBefore(parseISO(todo.dueDate), today) ||
           isWithinInterval(parseISO(todo.dueDate), {
@@ -163,7 +160,7 @@ export default function Home() {
             end: addDays(today, 1),
           }))
       ).length,
-      next7days: baseTodos.filter(todo =>
+      next7days: todos.filter(todo =>
         !todo.completed && todo.dueDate &&
         (isBefore(parseISO(todo.dueDate), today) ||
           isWithinInterval(parseISO(todo.dueDate), {
