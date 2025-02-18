@@ -148,10 +148,10 @@ export default function ListSelector({
         {filters.map((filter) => (
           <Button
             key={filter.id}
-            variant={currentFilter === filter.id && !selectedListId ? "default" : "ghost"}
+            variant={currentFilter === filter.id && selectedListId === null ? "default" : "ghost"}
             className={cn(
               "w-full justify-start",
-              currentFilter === filter.id && !selectedListId && "bg-primary"
+              currentFilter === filter.id && selectedListId === null && "bg-primary"
             )}
             onClick={() => {
               onFilterChange(filter.id);
@@ -174,10 +174,7 @@ export default function ListSelector({
                 "flex-1 justify-start",
                 selectedListId === list.id && "bg-primary"
               )}
-              onClick={() => {
-                onListSelect(list.id);
-                onFilterChange("all");
-              }}
+              onClick={() => onListSelect(list.id)}
             >
               <div
                 className="mr-2 h-2 w-2 rounded-full"
