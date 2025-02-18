@@ -45,6 +45,7 @@ export const listSchema = z.object({
   color: z.string(),
   createdAt: z.string(),
   sharedBy: z.string().optional(),
+  sharedCount: z.number().default(0),
 });
 
 export const insertListSchema = createInsertSchema(lists)

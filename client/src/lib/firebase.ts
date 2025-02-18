@@ -137,7 +137,8 @@ export const firebaseDB = {
               id: listId,
               name: value.name,
               color: value.color,
-              createdAt: value.createdAt
+              createdAt: value.createdAt,
+              sharedCount: value.sharedWith ? Object.keys(value.sharedWith).length : 0
             });
           }
         });
@@ -174,10 +175,11 @@ export const firebaseDB = {
                   const uniqueId = `shared_${ownerUid}_${listId}`;
                   listsMap.set(uniqueId, {
                     id: parseInt(listId),
-                    name: `${list.name} (Shared)`,
+                    name: list.name,
                     color: list.color,
                     createdAt: list.createdAt,
-                    sharedBy: ownerUid
+                    sharedBy: ownerUid,
+                    sharedCount: list.sharedWith ? Object.keys(list.sharedWith).length : 0
                   });
                 }
               });
@@ -481,13 +483,34 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to unshare lists');
 
     try {
-      const normalizedEmail = email.replace('.', '_');
-      const sharedWithRef = ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`);
-      await remove(sharedWithRef);
+      // Find user by email to remove shared reference
+      const usersRef = ref(database, 'users');
+      const userSnapshot = await get(usersRef);
+      const users = userSnapshot.val();
 
-      // Remove the reference from the shared user's sharedWithMe node
-      const sharedRef = ref(database, `users/${user.uid}/sharedWithMe/${user.uid}/${listId}`);
-      await remove(sharedRef);
+      if (!users) {
+        throw new Error('User not found');
+      }
+
+      let targetUserId = null;
+      for (const [uid, userData] of Object.entries(users)) {
+        if (userData?.profile?.email === email) {
+          targetUserId = uid;
+          break;
+        }
+      }
+
+      if (!targetUserId) {
+        throw new Error('User not found');
+      }
+
+      const normalizedEmail = email.replace(/\./g, '_');
+
+      // Remove from sharedWith
+      await remove(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`));
+
+      // Remove from sharedWithMe
+      await remove(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`));
 
       return { success: true };
     } catch (error) {
@@ -601,5 +624,19 @@ export const firebaseDB = {
     } catch (error) {
       console.error('Error cleaning up shared references:', error);
     }
-  }
+  },
+  // Add function to get shared users
+  async getSharedUsers(listId: number): Promise<string[]> {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Must be logged in to get shared users');
+
+    try {
+      const snapshot = await get(ref(database, `users/${user.uid}/lists/${listId}/sharedWith`));
+      const sharedWith = snapshot.val();
+      return sharedWith ? Object.values(sharedWith) : [];
+    } catch (error) {
+      console.error('Error getting shared users:', error);
+      throw error;
+    }
+  },
 };

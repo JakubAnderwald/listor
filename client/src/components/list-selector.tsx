@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Share2 } from "lucide-react";
+import { Plus, Trash2, Share2, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertListSchema, type List } from "@shared/schema";
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { firebaseDB } from "@/lib/firebase";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
@@ -52,6 +52,7 @@ export default function ListSelector({
 }: ListSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isManageShareOpen, setIsManageShareOpen] = useState(false);
   const [listToDelete, setListToDelete] = useState<List | null>(null);
   const [listToShare, setListToShare] = useState<List | null>(null);
   const { toast } = useToast();
@@ -69,6 +70,13 @@ export default function ListSelector({
     defaultValues: {
       email: "",
     },
+  });
+
+  // Query shared users for the selected list
+  const { data: sharedUsers = [] } = useQuery({
+    queryKey: ["sharedUsers", listToShare?.id],
+    queryFn: () => listToShare ? firebaseDB.getSharedUsers(listToShare.id) : Promise.resolve([]),
+    enabled: !!listToShare,
   });
 
   const createList = useMutation({
@@ -112,6 +120,18 @@ export default function ListSelector({
     },
     onError: () => {
       toast({ title: "Failed to share list", variant: "destructive" });
+    },
+  });
+
+  const unshareList = useMutation({
+    mutationFn: async ({ listId, email }: { listId: number; email: string }) => {
+      await firebaseDB.unshareList(listId, email);
+    },
+    onSuccess: () => {
+      toast({ title: "User removed from shared list" });
+    },
+    onError: () => {
+      toast({ title: "Failed to remove user", variant: "destructive" });
     },
   });
 
@@ -225,13 +245,31 @@ export default function ListSelector({
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="relative"
                   onClick={() => {
                     setListToShare(list);
                     setIsShareOpen(true);
                   }}
                 >
                   <Share2 className="h-4 w-4" />
+                  {list.sharedCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                      {list.sharedCount}
+                    </span>
+                  )}
                 </Button>
+                {list.sharedCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setListToShare(list);
+                      setIsManageShareOpen(true);
+                    }}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -320,6 +358,50 @@ export default function ListSelector({
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isManageShareOpen} onOpenChange={setIsManageShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Sharing</DialogTitle>
+            <DialogDescription>
+              Manage users who have access to "{listToShare?.name}".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {sharedUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                This list hasn't been shared with anyone yet.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {sharedUsers.map((email) => (
+                  <div key={email} className="flex items-center justify-between">
+                    <span className="text-sm">{email}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => listToShare && unshareList.mutate({ listId: listToShare.id, email })}
+                      disabled={unshareList.isPending}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setIsManageShareOpen(false);
+                setListToShare(null);
+              }}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
