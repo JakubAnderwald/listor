@@ -85,6 +85,16 @@ export default function Home() {
     };
   }, [queryClient, user]);
 
+  // Set default list to Inbox when lists are loaded
+  useEffect(() => {
+    if (!isLoadingLists && lists.length > 0 && selectedListId === null) {
+      const inboxList = lists.find(list => list.name === "Inbox");
+      if (inboxList) {
+        setSelectedListId(inboxList.id);
+      }
+    }
+  }, [isLoadingLists, lists, selectedListId]);
+
   // Filter todos based on selected list and current filter
   const filterTodos = () => {
     let filteredTodos = selectedListId

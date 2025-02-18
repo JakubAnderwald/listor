@@ -169,13 +169,6 @@ export default function ListSelector({
           </Dialog>
         </div>
         <div className="space-y-1">
-          <Button
-            variant={selectedListId === null ? "default" : "ghost"}
-            className="w-full justify-start"
-            onClick={() => onListSelect(null)}
-          >
-            All Lists
-          </Button>
           {lists.map((list) => (
             <div key={list.id} className="flex items-center gap-2">
               <Button
