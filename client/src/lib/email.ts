@@ -1,15 +1,12 @@
 import emailjs from '@emailjs/browser';
 
-if (!import.meta.env.VITE_EMAILJS_PUBLIC_KEY) {
-  console.error('EmailJS public key is not set');
-}
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
 
-if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-  console.error('EmailJS service ID is not set');
-}
-
-if (!import.meta.env.VITE_EMAILJS_TEMPLATE_ID) {
-  console.error('EmailJS template ID is not set');
+// Initialize EmailJS with the public key
+if (PUBLIC_KEY) {
+  emailjs.init(PUBLIC_KEY);
 }
 
 export const emailService = {
@@ -18,18 +15,28 @@ export const emailService = {
     fromName: string,
     listName: string
   ): Promise<boolean> {
+    if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
+      console.error('EmailJS configuration is incomplete:', {
+        hasPublicKey: !!PUBLIC_KEY,
+        hasServiceId: !!SERVICE_ID,
+        hasTemplateId: !!TEMPLATE_ID
+      });
+      return false;
+    }
+
     try {
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      const response = await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
         {
           to_email: toEmail,
           from_name: fromName,
           list_name: listName,
           app_name: 'Listor',
-        },
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        }
       );
+
+      console.log('Email sent successfully:', response);
       return true;
     } catch (error) {
       console.error('Error sending email notification:', error);
