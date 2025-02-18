@@ -120,26 +120,20 @@ export const firebaseDB = {
     const user = auth.currentUser;
     if (!user) return () => {};
 
-    // Subscribe to own lists and shared lists
-    const listsRef = ref(database, `users/${user.uid}/lists`);
-    const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
-
     // Create a map to track unique lists
     const listsMap = new Map<string, List>();
 
     // Subscribe to own lists
+    const listsRef = ref(database, `users/${user.uid}/lists`);
     const ownListsUnsubscribe = onValue(listsRef, (snapshot) => {
       const data = snapshot.val();
-
-      // Clear existing own lists from the map
-      listsMap.clear();
 
       if (data) {
         Object.entries(data).forEach(([key, value]: [string, any]) => {
           if (value && typeof value === 'object') {
             const listId = parseInt(key);
-            const uniqueKey = `own_${listId}`;
-            listsMap.set(uniqueKey, {
+            const uniqueId = `own_${listId}`;
+            listsMap.set(uniqueId, {
               id: listId,
               name: value.name,
               color: value.color,
@@ -154,8 +148,16 @@ export const firebaseDB = {
     });
 
     // Subscribe to shared lists
+    const sharedWithMeRef = ref(database, `users/${user.uid}/sharedWithMe`);
     const sharedListsUnsubscribe = onValue(sharedWithMeRef, async (snapshot) => {
       const sharedData = snapshot.val();
+
+      // Remove all previously shared lists from the map
+      for (const [key] of listsMap.entries()) {
+        if (key.startsWith('shared_')) {
+          listsMap.delete(key);
+        }
+      }
 
       if (sharedData) {
         for (const [ownerUid, lists] of Object.entries(sharedData)) {
@@ -169,8 +171,8 @@ export const firebaseDB = {
               Object.entries(lists).forEach(([listId]) => {
                 const list = ownerLists[listId];
                 if (list) {
-                  const uniqueKey = `shared_${ownerUid}_${listId}`;
-                  listsMap.set(uniqueKey, {
+                  const uniqueId = `shared_${ownerUid}_${listId}`;
+                  listsMap.set(uniqueId, {
                     id: parseInt(listId),
                     name: `${list.name} (Shared)`,
                     color: list.color,
@@ -184,13 +186,12 @@ export const firebaseDB = {
             console.error('Error fetching shared lists:', error);
           }
         }
-
-        // Trigger callback with updated lists
-        callback(Array.from(listsMap.values()));
       }
+
+      // Trigger callback with updated lists including shared ones
+      callback(Array.from(listsMap.values()));
     });
 
-    // Return cleanup function
     return () => {
       ownListsUnsubscribe();
       sharedListsUnsubscribe();
@@ -404,7 +405,10 @@ export const firebaseDB = {
     if (!user) throw new Error('Must be logged in to share lists');
 
     try {
-      const normalizedEmail = email.replace('.', '_');
+      // Normalize email by replacing '.' with '_' for Firebase path
+      const normalizedEmail = email.replace(/\./g, '_');
+
+      // Get list details
       const listRef = ref(database, `users/${user.uid}/lists/${listId}`);
       const snapshot = await get(listRef);
       const listData = snapshot.val();
@@ -416,7 +420,7 @@ export const firebaseDB = {
       // Add email to sharedWith
       await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
 
-      // Find user by email to create notification and shared reference
+      // Find user by email
       const usersRef = ref(database, 'users');
       const emailQuery = query(
         usersRef,
@@ -427,26 +431,28 @@ export const firebaseDB = {
       const userSnapshot = await get(emailQuery);
       const userData = userSnapshot.val();
 
-      if (userData) {
-        const targetUserId = Object.keys(userData)[0];
-
-        // Create shared reference
-        await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
-
-        const notificationId = Date.now();
-        // Create notification
-        await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
-          type: 'list_shared',
-          message: `${user.displayName} shared the list "${listData.name}" with you`,
-          createdAt: new Date().toISOString(),
-          read: false,
-          listId: listId,
-          fromUser: {
-            uid: user.uid,
-            displayName: user.displayName
-          }
-        });
+      if (!userData) {
+        throw new Error('User not found');
       }
+
+      const targetUserId = Object.keys(userData)[0];
+
+      // Create shared reference
+      await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
+
+      // Create notification
+      const notificationId = Date.now();
+      await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
+        type: 'list_shared',
+        message: `${user.displayName} shared the list "${listData.name}" with you`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        listId: listId,
+        fromUser: {
+          uid: user.uid,
+          displayName: user.displayName
+        }
+      });
 
       return { success: true };
     } catch (error) {

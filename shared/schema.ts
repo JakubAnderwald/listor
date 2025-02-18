@@ -35,7 +35,7 @@ export const todos = pgTable("todos", {
   recurrenceType: text("recurrence_type").notNull().default(RecurrenceType.NONE),
   originalDueDate: timestamp("original_due_date"),
   priority: text("priority").notNull().default(PriorityLevel.MEDIUM),
-  listId: serial("list_id").notNull(), // Reference to the list this todo belongs to
+  listId: serial("list_id").notNull(),
 });
 
 // List schemas
@@ -44,6 +44,7 @@ export const listSchema = z.object({
   name: z.string(),
   color: z.string(),
   createdAt: z.string(),
+  sharedBy: z.string().optional(),
 });
 
 export const insertListSchema = createInsertSchema(lists)
