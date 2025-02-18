@@ -457,20 +457,6 @@ export const firebaseDB = {
       // Create shared reference
       await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
 
-      // Create notification
-      const notificationId = Date.now();
-      await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
-        type: 'list_shared',
-        message: `${user.displayName} shared the list "${listData.name}" with you`,
-        createdAt: new Date().toISOString(),
-        read: false,
-        listId: listId,
-        fromUser: {
-          uid: user.uid,
-          displayName: user.displayName
-        }
-      });
-
       return { success: true };
     } catch (error) {
       console.error('Error sharing list:', error);
