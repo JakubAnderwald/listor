@@ -493,8 +493,8 @@ export const firebaseDB = {
       }
 
       let targetUserId = null;
-      for (const [uid, userData] of Object.entries(users)) {
-        if (userData?.profile?.email === email) {
+      for (const [uid, userData] of Object.entries<any>(users)) {
+        if (userData && userData.profile && userData.profile.email === email) {
           targetUserId = uid;
           break;
         }
