@@ -171,6 +171,12 @@ export default function Home() {
     };
   };
 
+  // Get the Inbox list ID or fallback to the first list
+  const getDefaultListId = () => {
+    const inboxList = lists.find(list => list.name === "Inbox");
+    return selectedListId ?? inboxList?.id ?? lists[0]?.id ?? 1;
+  };
+
   const filteredTodos = filterTodos();
   const filterCounts = getFilterCounts();
   const isLoading = isLoadingTodos || isLoadingLists;
@@ -206,7 +212,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-6">
-          <AddTodo />
+          <AddTodo defaultListId={getDefaultListId()} />
           <div className="grid grid-cols-[250px_1fr] gap-6">
             <ListSelector
               lists={lists}
@@ -219,7 +225,6 @@ export default function Home() {
             <TodoList
               todos={filteredTodos}
               isLoading={isLoading}
-              showFilters={false}
             />
           </div>
         </div>

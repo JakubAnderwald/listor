@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, RotateCw, Flag } from "lucide-react";
+import { Calendar as CalendarIcon, RotateCw, Flag, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
 import { firebaseDB } from "@/lib/firebase";
-import type { List } from "@shared/schema";
 import { useEffect } from "react";
 
 const getPriorityColor = (priority: string) => {
@@ -30,15 +28,12 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-export default function AddTodo() {
-  const { toast } = useToast();
-  const { data: lists = [] } = useQuery<List[]>({
-    queryKey: ["lists"],
-    queryFn: () => Promise.resolve([]),  // Lists will be populated by Firebase subscription
-  });
+interface AddTodoProps {
+  defaultListId: number;
+}
 
-  // Find the Inbox list or use the first available list
-  const defaultListId = lists.find(list => list.name === "Inbox")?.id ?? lists[0]?.id ?? 1;
+export default function AddTodo({ defaultListId }: AddTodoProps) {
+  const { toast } = useToast();
 
   const form = useForm({
     resolver: zodResolver(insertTodoSchema),
@@ -53,13 +48,10 @@ export default function AddTodo() {
     },
   });
 
-  // Update listId when lists change
+  // Update listId when defaultListId changes
   useEffect(() => {
-    const inboxList = lists.find(list => list.name === "Inbox");
-    if (inboxList) {
-      form.setValue("listId", inboxList.id);
-    }
-  }, [lists, form]);
+    form.setValue("listId", defaultListId);
+  }, [defaultListId, form]);
 
   const createTodo = useMutation({
     mutationFn: async (data: {
@@ -74,7 +66,10 @@ export default function AddTodo() {
       await firebaseDB.createTodo(data);
     },
     onSuccess: () => {
-      form.reset();
+      form.reset({ 
+        ...form.formState.defaultValues, 
+        listId: defaultListId 
+      });
     },
     onError: () => {
       toast({ title: "Failed to create todo", variant: "destructive" });
@@ -99,36 +94,6 @@ export default function AddTodo() {
                   autoComplete="off"
                 />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="listId"
-          render={({ field }) => (
-            <FormItem className="flex-shrink-0">
-              <Select
-                onValueChange={(value) => field.onChange(parseInt(value))}
-                value={field.value?.toString()}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select List" />
-                </SelectTrigger>
-                <SelectContent>
-                  {lists.map((list) => (
-                    <SelectItem key={list.id} value={list.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: list.color }}
-                        />
-                        <span>{list.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}
