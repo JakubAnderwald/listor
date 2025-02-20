@@ -3,6 +3,7 @@ import emailjs from '@emailjs/browser';
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
 const TEMPLATE_ID = 'template_nfac5px';
+const APP_URL = import.meta.env.PROD ? 'https://listor.eu' : 'http://localhost:5000';
 
 // Initialize EmailJS with the public key
 if (!PUBLIC_KEY) {
@@ -11,7 +12,8 @@ if (!PUBLIC_KEY) {
     mode: import.meta.env.MODE,
     prod: import.meta.env.PROD,
     dev: import.meta.env.DEV,
-    base: import.meta.env.BASE_URL
+    base: import.meta.env.BASE_URL,
+    appUrl: APP_URL
   });
 } else {
   try {
@@ -20,7 +22,8 @@ if (!PUBLIC_KEY) {
       hasPublicKey: !!PUBLIC_KEY,
       hasServiceId: !!SERVICE_ID,
       templateId: TEMPLATE_ID,
-      mode: import.meta.env.MODE
+      mode: import.meta.env.MODE,
+      appUrl: APP_URL
     });
   } catch (error) {
     console.error('Failed to initialize EmailJS:', error);
@@ -39,7 +42,8 @@ export const emailService = {
         hasServiceId: !!SERVICE_ID,
         templateId: TEMPLATE_ID,
         mode: import.meta.env.MODE,
-        base: import.meta.env.BASE_URL
+        base: import.meta.env.BASE_URL,
+        appUrl: APP_URL
       });
       return false;
     }
@@ -52,7 +56,8 @@ export const emailService = {
         serviceId: SERVICE_ID,
         templateId: TEMPLATE_ID,
         hasPublicKey: !!PUBLIC_KEY,
-        mode: import.meta.env.MODE
+        mode: import.meta.env.MODE,
+        appUrl: APP_URL
       });
 
       const response = await emailjs.send(
@@ -77,7 +82,8 @@ export const emailService = {
         config: {
           hasPublicKey: !!PUBLIC_KEY,
           hasServiceId: !!SERVICE_ID,
-          templateId: TEMPLATE_ID
+          templateId: TEMPLATE_ID,
+          appUrl: APP_URL
         }
       });
       return false;
