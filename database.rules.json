@@ -45,7 +45,7 @@
           "$notificationId": {
             ".validate": "newData.hasChildren(['type', 'message', 'createdAt', 'read'])",
             "type": {
-              ".validate": "newData.isString() && ['list_shared'].includes(newData.val())"
+              ".validate": "newData.isString() && newData.val() === 'list_shared'"
             },
             "message": {
               ".validate": "newData.isString()"
@@ -77,13 +77,13 @@
               ".validate": "!newData.exists() || newData.isString()"
             },
             "recurrenceType": {
-              ".validate": "!newData.exists() || (newData.isString() && ['none', 'daily', 'weekly', 'monthly', 'yearly'].includes(newData.val()))"
+              ".validate": "!newData.exists() || (newData.isString() && (newData.val() === 'none' || newData.val() === 'daily' || newData.val() === 'weekly' || newData.val() === 'monthly' || newData.val() === 'yearly'))"
             },
             "originalDueDate": {
               ".validate": "!newData.exists() || newData.isString()"
             },
             "priority": {
-              ".validate": "!newData.exists() || (newData.isString() && ['none', 'low', 'medium', 'high'].includes(newData.val()))"
+              ".validate": "!newData.exists() || (newData.isString() && (newData.val() === 'none' || newData.val() === 'low' || newData.val() === 'medium' || newData.val() === 'high'))"
             },
             "listId": {
               ".validate": "newData.isNumber()"
