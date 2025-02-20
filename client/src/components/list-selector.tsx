@@ -84,7 +84,10 @@ export default function ListSelector({
 
   const createList = useMutation({
     mutationFn: async (data: { name: string; color: string }) => {
-      await firebaseDB.createList(data);
+      await firebaseDB.createList({
+        ...data,
+        sharedCount: 0, // Add the required sharedCount property
+      });
     },
     onSuccess: () => {
       setIsOpen(false);

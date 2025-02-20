@@ -21,15 +21,19 @@ export default function TodoItem({ todo }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
-  const [editRecurrenceType, setEditRecurrenceType] = useState<keyof typeof RecurrenceType>(todo.recurrenceType as keyof typeof RecurrenceType);
-  const [editPriority, setEditPriority] = useState<keyof typeof PriorityLevel>(todo.priority as keyof typeof PriorityLevel);
+  const [editRecurrenceType, setEditRecurrenceType] = useState<string>(todo.recurrenceType?.toLowerCase() || "none");
+  const [editPriority, setEditPriority] = useState<string>(todo.priority?.toLowerCase() || "none");
   const { toast } = useToast();
 
   const isOverdue = todo.dueDate && isBefore(new Date(todo.dueDate), startOfDay(new Date()));
 
   const updateTodo = useMutation({
     mutationFn: async (data: Partial<Todo>) => {
-      await firebaseDB.updateTodo(todo.id, data);
+      await firebaseDB.updateTodo(todo.id, {
+        ...data,
+        recurrenceType: data.recurrenceType?.toUpperCase(),
+        priority: data.priority?.toUpperCase()
+      });
     },
     onSuccess: () => {
       setIsEditing(false);
@@ -64,9 +68,8 @@ export default function TodoItem({ todo }: TodoItemProps) {
   };
 
   const getPriorityColor = (priority: string | undefined) => {
-    if (!priority || priority === "none") return ""; // Return empty string for no priority
+    if (!priority || priority === "none") return "";
 
-    // Convert priority to lowercase for case-insensitive comparison
     const p = priority.toLowerCase();
     switch (p) {
       case "high":
@@ -76,7 +79,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
       case "low":
         return "!text-emerald-500 !fill-emerald-500 !stroke-emerald-500";
       default:
-        return ""; // Return empty string for unknown priorities
+        return "";
     }
   };
 
@@ -116,7 +119,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
           </Popover>
           <Select
             value={editRecurrenceType}
-            onValueChange={(value: keyof typeof RecurrenceType) => setEditRecurrenceType(value)}
+            onValueChange={(value: string) => setEditRecurrenceType(value)}
           >
             <SelectTrigger className="w-[140px]">
               <RotateCw className="mr-2 h-4 w-4" />
@@ -132,7 +135,7 @@ export default function TodoItem({ todo }: TodoItemProps) {
           </Select>
           <Select
             value={editPriority}
-            onValueChange={(value: keyof typeof PriorityLevel) => setEditPriority(value)}
+            onValueChange={(value: string) => setEditPriority(value)}
           >
             <SelectTrigger className="w-[140px]">
               <Flag className={cn("mr-2 h-4 w-4", getPriorityColor(editPriority))} />
@@ -168,8 +171,8 @@ export default function TodoItem({ todo }: TodoItemProps) {
               setIsEditing(false);
               setEditText(todo.text);
               setEditDueDate(todo.dueDate);
-              setEditRecurrenceType(todo.recurrenceType as keyof typeof RecurrenceType);
-              setEditPriority(todo.priority as keyof typeof PriorityLevel);
+              setEditRecurrenceType(todo.recurrenceType?.toLowerCase() || "none");
+              setEditPriority(todo.priority?.toLowerCase() || "none");
             }}
           >
             <X className="h-4 w-4" />
