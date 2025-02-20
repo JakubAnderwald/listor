@@ -448,33 +448,59 @@ export const firebaseDB = {
         currentUser: user.uid,
       });
 
-      // Prepare all database updates
-      const updates: { [key: string]: any } = {};
-
-      // Add email to sharedWith and increment sharedCount
-      updates[`users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`] = email;
-      updates[`users/${user.uid}/lists/${listId}/sharedCount`] = (listData.sharedCount || 0) + 1;
-
-      // Add shared reference and notification if target user exists
-      if (targetUserId) {
-        updates[`users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`] = true;
-        updates[`users/${targetUserId}/notifications/${Date.now()}`] = {
-          type: 'list_shared',
-          message: `${user.displayName} shared their list "${listData.name}" with you`,
-          createdAt: new Date().toISOString(),
-          read: false,
-          listId: listId,
-          fromUser: {
-            uid: user.uid,
-            displayName: user.displayName
-          }
-        };
+      // Step 1: Add email to sharedWith
+      try {
+        await set(
+          ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`),
+          email
+        );
+      } catch (error) {
+        console.error('Failed to add email to sharedWith:', error);
+        throw new Error('Failed to share list: Could not add sharing permission');
       }
 
-      // Execute all updates in a single atomic operation
-      await set(ref(database), updates);
+      // Step 2: Update sharedCount
+      try {
+        await set(
+          ref(database, `users/${user.uid}/lists/${listId}/sharedCount`),
+          (listData.sharedCount || 0) + 1
+        );
+      } catch (error) {
+        console.error('Failed to update sharedCount:', error);
+        // Don't throw here, continue with the process
+      }
 
-      // Send email notification
+      // Step 3: If target user exists, create shared reference and notification
+      if (targetUserId) {
+        try {
+          // Add shared reference
+          await set(
+            ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`),
+            true
+          );
+
+          // Add notification
+          await set(
+            ref(database, `users/${targetUserId}/notifications/${Date.now()}`),
+            {
+              type: 'list_shared',
+              message: `${user.displayName} shared their list "${listData.name}" with you`,
+              createdAt: new Date().toISOString(),
+              read: false,
+              listId: listId,
+              fromUser: {
+                uid: user.uid,
+                displayName: user.displayName
+              }
+            }
+          );
+        } catch (error) {
+          console.error('Failed to create shared reference or notification:', error);
+          // Don't throw here, the main sharing operation succeeded
+        }
+      }
+
+      // Step 4: Send email notification
       try {
         const emailSent = await emailService.sendShareNotification(
           email,
@@ -495,6 +521,7 @@ export const firebaseDB = {
           email,
           listName: listData.name
         });
+        // Don't throw here, the main sharing operation succeeded
       }
 
       return { success: true };
