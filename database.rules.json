@@ -26,12 +26,6 @@
           "$listId": {
             ".read": "auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
             ".write": "auth.uid === $uid",
-            "sharedWith": {
-              ".write": "auth.uid === $uid",
-              "$email": {
-                ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
-              }
-            },
             "name": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
@@ -43,6 +37,12 @@
             },
             "sharedCount": {
               ".validate": "newData.isNumber()"
+            },
+            "sharedWith": {
+              ".write": "auth.uid === $uid",
+              "$email": {
+                ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
+              }
             }
           }
         },
@@ -72,7 +72,9 @@
           }
         },
         "sharedWithMe": {
+          ".write": "auth.uid === $uid",
           "$ownerUid": {
+            ".write": "auth.uid === $uid || auth.uid === $ownerUid",
             "$listId": {
               ".read": "auth.uid === $uid",
               ".write": "auth.uid === $uid || auth.uid === $ownerUid",
