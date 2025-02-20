@@ -421,52 +421,43 @@ export const firebaseDB = {
       const listData = snapshot.val();
 
       if (!listData) {
+        console.error('List not found:', { listId, uid: user.uid });
         throw new Error(`List with id ${listId} not found`);
       }
 
       // Normalize email by replacing '.' with '_' for Firebase path
       const normalizedEmail = email.replace(/\./g, '_');
 
-      // Add email to sharedWith
-      await set(ref(database, `users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`), email);
-
       // Find user by email
       const usersRef = ref(database, 'users');
       const userSnapshot = await get(usersRef);
-      const users = userSnapshot.val();
+      const users = userSnapshot.val() || {};
 
-      if (!users) {
-        throw new Error('User not found');
-      }
-
-      let targetUserId = null;
-      for (const [uid, userData] of Object.entries(users)) {
+      let targetUserId: string | null = null;
+      Object.entries(users).forEach(([uid, userData]: [string, any]) => {
         if (userData?.profile?.email === email) {
           targetUserId = uid;
-          break;
         }
-      }
+      });
 
-      // Even if the target user doesn't exist in the database yet,
-      // we'll still send them an email notification
-      try {
-        await emailService.sendShareNotification(
-          email,
-          user.displayName || 'A Listor user',
-          listData.name
-        );
-      } catch (error) {
-        console.error('Error sending email notification:', error);
-        // Don't throw here, we still want to complete the share operation
-      }
+      console.log('Share list attempt:', {
+        listId,
+        email,
+        targetUserId: targetUserId || 'not found',
+        hasListData: !!listData,
+        currentUser: user.uid,
+      });
 
-      // If we found the user in the database, create the shared reference
+      // Prepare all database updates
+      const updates: { [key: string]: any } = {
+        [`users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`]: email,
+        [`users/${user.uid}/lists/${listId}/sharedCount`]: (listData.sharedCount || 0) + 1
+      };
+
+      // Add shared reference and notification if target user exists
       if (targetUserId) {
-        await set(ref(database, `users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`), true);
-
-        // Create notification in the database
-        const notificationId = Date.now();
-        await set(ref(database, `users/${targetUserId}/notifications/${notificationId}`), {
+        updates[`users/${targetUserId}/sharedWithMe/${user.uid}/${listId}`] = true;
+        updates[`users/${targetUserId}/notifications/${Date.now()}`] = {
           type: 'list_shared',
           message: `${user.displayName} shared their list "${listData.name}" with you`,
           createdAt: new Date().toISOString(),
@@ -476,12 +467,46 @@ export const firebaseDB = {
             uid: user.uid,
             displayName: user.displayName
           }
+        };
+      }
+
+      // Execute all updates in a single atomic operation
+      await set(ref(database), updates);
+
+      // Send email notification
+      try {
+        const emailSent = await emailService.sendShareNotification(
+          email,
+          user.displayName || 'A Listor user',
+          listData.name
+        );
+
+        console.log('Email notification result:', {
+          success: emailSent,
+          to: email,
+          from: user.displayName,
+          listName: listData.name
         });
+      } catch (error) {
+        console.error('Error sending email notification:', {
+          error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          email,
+          listName: listData.name
+        });
+        // Don't throw here - we still want to return success if the sharing worked
       }
 
       return { success: true };
     } catch (error) {
-      console.error('Error sharing list:', error);
+      console.error('Error sharing list:', {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        listId,
+        email,
+        currentUser: user.uid
+      });
       throw error;
     }
   },
