@@ -75,7 +75,10 @@ export default function ListSelector({
   // Query shared users for the selected list
   const { data: sharedUsers = [] } = useQuery({
     queryKey: ["sharedUsers", listToShare?.id],
-    queryFn: () => listToShare ? firebaseDB.getSharedUsers(listToShare.id) : Promise.resolve([]),
+    queryFn: () =>
+      listToShare
+        ? firebaseDB.getSharedUsers(listToShare.id)
+        : Promise.resolve([]),
     enabled: !!listToShare,
   });
 
@@ -131,19 +134,17 @@ export default function ListSelector({
       toast({ title: "User removed from shared list" });
     },
     onError: (error: Error) => {
-      toast({ 
+      toast({
         title: "Failed to remove user",
         description: error.message,
-        variant: "destructive"
+        variant: "destructive",
       });
     },
   });
 
   const filters = [
-    { id: 'active', label: 'Active' },
-    { id: 'completed', label: 'Completed' },
-    { id: 'today', label: 'Today' },
-    { id: 'next7days', label: 'Next 7 Days' }
+    { id: "today", label: "Today" },
+    { id: "next7days", label: "Next 7 Days" },
   ];
 
   return (
@@ -199,13 +200,44 @@ export default function ListSelector({
       </div>
 
       <div className="space-y-1">
+        {lists.map((list) =>
+          list.name === "Inbox" && (
+            <div key={list.id} className="flex items-center gap-2">
+              <Button
+                variant={selectedListId === list.id ? "default" : "ghost"}
+                className={cn(
+                  "flex-1 justify-start",
+                  selectedListId === list.id && "bg-primary"
+                )}
+                onClick={() => {
+                  if (selectedListId !== list.id) {
+                    onListSelect(list.id);
+                  }
+                }}
+              >
+                <div
+                  className="mr-2 h-2 w-2 rounded-full"
+                  style={{ backgroundColor: list.color }}
+                />
+                <span className="flex-1 text-left">{list.name}</span>
+              </Button>
+            </div>
+          )
+        )}
+
         {filters.map((filter) => (
           <Button
             key={filter.id}
-            variant={selectedListId === null && currentFilter === filter.id ? "default" : "ghost"}
+            variant={
+              selectedListId === null && currentFilter === filter.id
+                ? "default"
+                : "ghost"
+            }
             className={cn(
               "w-full justify-start",
-              selectedListId === null && currentFilter === filter.id && "bg-primary"
+              selectedListId === null &&
+                currentFilter === filter.id &&
+                "bg-primary"
             )}
             onClick={() => {
               if (selectedListId !== null || currentFilter !== filter.id) {
@@ -221,70 +253,75 @@ export default function ListSelector({
           </Button>
         ))}
 
-        {lists.map((list) => (
-          <div key={list.id} className="flex items-center gap-2">
-            <Button
-              variant={selectedListId === list.id ? "default" : "ghost"}
-              className={cn(
-                "flex-1 justify-start",
-                selectedListId === list.id && "bg-primary"
-              )}
-              onClick={() => {
-                if (selectedListId !== list.id) {
-                  onListSelect(list.id);
-                }
-              }}
-            >
-              <div
-                className="mr-2 h-2 w-2 rounded-full"
-                style={{ backgroundColor: list.color }}
-              />
-              <span className="flex-1 text-left">{list.name}</span>
-              {list.sharedBy && (
-                <span className="ml-2 text-xs text-muted-foreground">(Shared)</span>
-              )}
-            </Button>
-            {list.name !== "Inbox" && !list.sharedBy && (
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
-                  onClick={() => {
-                    setListToShare(list);
-                    setIsShareOpen(true);
-                  }}
-                >
-                  <Share2 className="h-4 w-4" />
-                  {list.sharedCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                      {list.sharedCount}
-                    </span>
-                  )}
-                </Button>
-                {list.sharedCount > 0 && (
+        {lists
+          .filter((list) => list.name !== "Inbox")
+          .map((list) => (
+            <div key={list.id} className="flex items-center gap-2">
+              <Button
+                variant={selectedListId === list.id ? "default" : "ghost"}
+                className={cn(
+                  "flex-1 justify-start",
+                  selectedListId === list.id && "bg-primary"
+                )}
+                onClick={() => {
+                  if (selectedListId !== list.id) {
+                    onListSelect(list.id);
+                  }
+                }}
+              >
+                <div
+                  className="mr-2 h-2 w-2 rounded-full"
+                  style={{ backgroundColor: list.color }}
+                />
+                <span className="flex-1 text-left">{list.name}</span>
+                {list.sharedBy && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (Shared)
+                  </span>
+                )}
+              </Button>
+              {!list.sharedBy && (
+                <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="relative"
                     onClick={() => {
                       setListToShare(list);
-                      setIsManageShareOpen(true);
+                      setIsShareOpen(true);
                     }}
                   >
-                    <Users className="h-4 w-4" />
+                    <Share2 className="h-4 w-4" />
+                    {list.sharedCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                        {list.sharedCount}
+                      </span>
+                    )}
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setListToDelete(list)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
+                  {list.sharedCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setListToShare(list);
+                        setIsManageShareOpen(true);
+                      }}
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setListToDelete(list)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))
+        }
       </div>
 
       <Dialog open={!!listToDelete} onOpenChange={() => setListToDelete(null)}>
@@ -292,7 +329,8 @@ export default function ListSelector({
           <DialogHeader>
             <DialogTitle>Delete List</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{listToDelete?.name}"? All tasks in this list will be moved to Inbox.
+              Are you sure you want to delete "{listToDelete?.name}"? All tasks
+              in this list will be moved to Inbox.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -318,13 +356,15 @@ export default function ListSelector({
           <DialogHeader>
             <DialogTitle>Share List</DialogTitle>
             <DialogDescription>
-              Enter the email address of the user you want to share "{listToShare?.name}" with.
+              Enter the email address of the user you want to share
+              "{listToShare?.name}" with.
             </DialogDescription>
           </DialogHeader>
           <Form {...shareForm}>
             <form
               onSubmit={shareForm.handleSubmit((data) =>
-                listToShare && shareList.mutate({ listId: listToShare.id, email: data.email })
+                listToShare &&
+                shareList.mutate({ listId: listToShare.id, email: data.email })
               )}
               className="space-y-4"
             >
@@ -386,7 +426,10 @@ export default function ListSelector({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => listToShare && unshareList.mutate({ listId: listToShare.id, email })}
+                      onClick={() =>
+                        listToShare &&
+                        unshareList.mutate({ listId: listToShare.id, email })
+                      }
                       disabled={unshareList.isPending}
                     >
                       {unshareList.isPending ? "Removing..." : "Remove"}

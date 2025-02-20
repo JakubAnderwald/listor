@@ -105,10 +105,6 @@ export default function Home() {
     const in7Days = addDays(today, 7);
 
     switch (currentFilter) {
-      case "active":
-        return filteredTodos.filter((todo) => !todo.completed);
-      case "completed":
-        return filteredTodos.filter((todo) => todo.completed);
       case "today": {
         const overdueTodos = filteredTodos.filter(
           (todo) => todo.dueDate && isBefore(parseISO(todo.dueDate), today)
@@ -147,9 +143,6 @@ export default function Home() {
     const in7Days = addDays(today, 7);
 
     return {
-      all: todos.length,
-      active: todos.filter((todo) => !todo.completed).length,
-      completed: todos.filter((todo) => todo.completed).length,
       today: todos.filter(todo =>
         !todo.completed && todo.dueDate &&
         (isBefore(parseISO(todo.dueDate), today) ||
