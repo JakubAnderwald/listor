@@ -449,10 +449,11 @@ export const firebaseDB = {
       });
 
       // Prepare all database updates
-      const updates: { [key: string]: any } = {
-        [`users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`]: email,
-        [`users/${user.uid}/lists/${listId}/sharedCount`]: (listData.sharedCount || 0) + 1
-      };
+      const updates: { [key: string]: any } = {};
+
+      // Add email to sharedWith and increment sharedCount
+      updates[`users/${user.uid}/lists/${listId}/sharedWith/${normalizedEmail}`] = email;
+      updates[`users/${user.uid}/lists/${listId}/sharedCount`] = (listData.sharedCount || 0) + 1;
 
       // Add shared reference and notification if target user exists
       if (targetUserId) {
@@ -494,7 +495,6 @@ export const firebaseDB = {
           email,
           listName: listData.name
         });
-        // Don't throw here - we still want to return success if the sharing worked
       }
 
       return { success: true };

@@ -24,6 +24,8 @@
         },
         "lists": {
           "$listId": {
+            ".read": "auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
+            ".write": "auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
             ".validate": "newData.hasChildren(['name', 'color'])",
             "name": {
               ".validate": "newData.isString() && newData.val().length > 0"
@@ -34,6 +36,9 @@
             "createdAt": {
               ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
             },
+            "sharedCount": {
+              ".validate": "newData.isNumber()"
+            },
             "sharedWith": {
               "$email": {
                 ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
@@ -43,6 +48,8 @@
         },
         "notifications": {
           "$notificationId": {
+            ".read": "auth.uid === $uid",
+            ".write": "auth.uid === $uid || root.child('users').child($uid).child('lists').child(newData.child('listId').val()).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
             ".validate": "newData.hasChildren(['type', 'message', 'createdAt', 'read'])",
             "type": {
               ".validate": "newData.isString() && newData.val() === 'list_shared'"
@@ -66,6 +73,8 @@
         },
         "todos": {
           "$todoId": {
+            ".read": "auth.uid === $uid",
+            ".write": "auth.uid === $uid",
             ".validate": "newData.hasChildren(['text', 'completed', 'listId'])",
             "text": {
               ".validate": "newData.isString() && newData.val().length > 0"
@@ -93,8 +102,9 @@
         "sharedWithMe": {
           "$ownerUid": {
             "$listId": {
-              ".read": "auth.token.email === root.child('users').child($ownerUid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).val()",
-              ".write": "auth.token.email === root.child('users').child($ownerUid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).val()"
+              ".read": "auth.uid === $uid",
+              ".write": "$ownerUid === auth.uid || root.child('users').child($ownerUid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
+              ".validate": "newData.isBoolean()"
             }
           }
         }
