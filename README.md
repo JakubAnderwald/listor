@@ -1,7 +1,3 @@
-git clone https://github.com/JakubAnderwald/listor.git
-cd listor
-```
-
 2. Install dependencies:
 ```bash
 npm install
@@ -33,6 +29,8 @@ VITE_FIREBASE_API_KEY=your-api-key
 VITE_FIREBASE_PROJECT_ID=your-project-id
 VITE_FIREBASE_DATABASE_URL=your-database-url
 VITE_FIREBASE_APP_ID=your-app-id
+VITE_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
+VITE_EMAILJS_SERVICE_ID=your-emailjs-service-id
 ```
 
 5. Start the development server:
@@ -110,3 +108,51 @@ listor/
 │   │   └── pages/        # Page components
 ├── shared/           # Shared types and schemas
 └── database.rules.json  # Firebase security rules
+```
+
+## 📦 Deployment
+
+### Firebase Hosting Setup
+
+1. Install Firebase CLI globally (if not already installed):
+```bash
+npm install -g firebase-tools
+```
+
+2. Login to Firebase:
+```bash
+firebase login
+```
+
+3. Configure environment variables for production:
+```bash
+# Create a .env.production file with your production values
+firebase functions:config:set emailjs.public_key="your_emailjs_public_key"
+firebase functions:config:set emailjs.service_id="your_emailjs_service_id"
+```
+
+4. Deploy the application:
+```bash
+npm run build
+firebase deploy
+```
+
+### Environment Variables
+
+The following environment variables are required:
+
+Development (`.env`):
+```env
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_DATABASE_URL=your-database-url
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
+VITE_EMAILJS_SERVICE_ID=your-emailjs-service-id
+```
+
+Production (Firebase):
+Make sure to set these using Firebase CLI:
+```bash
+firebase functions:config:set emailjs.public_key="your_value"
+firebase functions:config:set emailjs.service_id="your_value"

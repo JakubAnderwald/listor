@@ -2,10 +2,30 @@ import emailjs from '@emailjs/browser';
 
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-const TEMPLATE_ID = 'template_nfac5px'; // Hardcoding the template ID as specified
+const TEMPLATE_ID = 'template_nfac5px';
 
 // Initialize EmailJS with the public key
-emailjs.init(PUBLIC_KEY);
+if (!PUBLIC_KEY) {
+  console.error('EmailJS PUBLIC_KEY is not configured. Please check your environment variables.');
+  console.log('Current environment:', {
+    mode: import.meta.env.MODE,
+    prod: import.meta.env.PROD,
+    dev: import.meta.env.DEV,
+    base: import.meta.env.BASE_URL
+  });
+} else {
+  try {
+    emailjs.init(PUBLIC_KEY);
+    console.log('EmailJS initialized successfully with configuration:', {
+      hasPublicKey: !!PUBLIC_KEY,
+      hasServiceId: !!SERVICE_ID,
+      templateId: TEMPLATE_ID,
+      mode: import.meta.env.MODE
+    });
+  } catch (error) {
+    console.error('Failed to initialize EmailJS:', error);
+  }
+}
 
 export const emailService = {
   async sendShareNotification(
@@ -14,9 +34,12 @@ export const emailService = {
     listName: string
   ): Promise<boolean> {
     if (!PUBLIC_KEY || !SERVICE_ID) {
-      console.error('EmailJS configuration is incomplete:', {
+      console.error('EmailJS configuration is missing:', {
         hasPublicKey: !!PUBLIC_KEY,
-        hasServiceId: !!SERVICE_ID
+        hasServiceId: !!SERVICE_ID,
+        templateId: TEMPLATE_ID,
+        mode: import.meta.env.MODE,
+        base: import.meta.env.BASE_URL
       });
       return false;
     }
@@ -27,7 +50,9 @@ export const emailService = {
         fromName,
         listName,
         serviceId: SERVICE_ID,
-        templateId: TEMPLATE_ID
+        templateId: TEMPLATE_ID,
+        hasPublicKey: !!PUBLIC_KEY,
+        mode: import.meta.env.MODE
       });
 
       const response = await emailjs.send(
@@ -44,7 +69,17 @@ export const emailService = {
       console.log('Email sent successfully:', response);
       return true;
     } catch (error) {
-      console.error('Error sending email notification:', error);
+      console.error('Error sending email notification:', {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        mode: import.meta.env.MODE,
+        config: {
+          hasPublicKey: !!PUBLIC_KEY,
+          hasServiceId: !!SERVICE_ID,
+          templateId: TEMPLATE_ID
+        }
+      });
       return false;
     }
   },
