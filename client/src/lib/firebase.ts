@@ -470,7 +470,7 @@ export const firebaseDB = {
         // Don't throw here, continue with the process
       }
 
-      // Step 3: If target user exists, create shared reference and notification
+      // Step 3: If target user exists, create shared reference
       if (targetUserId) {
         try {
           // Add shared reference
@@ -521,7 +521,6 @@ export const firebaseDB = {
           email,
           listName: listData.name
         });
-        // Don't throw here, the main sharing operation succeeded
       }
 
       return { success: true };

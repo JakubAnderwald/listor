@@ -24,8 +24,8 @@
         },
         "lists": {
           "$listId": {
-            ".read": "auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists()",
-            ".write": "auth.uid === $uid",
+            ".read": "auth !== null && (auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists())",
+            ".write": "auth !== null && (auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists())",
             "name": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
@@ -39,7 +39,7 @@
               ".validate": "newData.isNumber()"
             },
             "sharedWith": {
-              ".write": "auth.uid === $uid",
+              ".write": "auth !== null && auth.uid === $uid",
               "$email": {
                 ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
               }
@@ -49,7 +49,7 @@
         "notifications": {
           "$notificationId": {
             ".read": "auth.uid === $uid",
-            ".write": "auth.uid === $uid || (!data.exists() && auth != null)",
+            ".write": "auth !== null && (auth.uid === $uid || !data.exists())",
             ".validate": "newData.hasChildren(['type', 'message', 'createdAt', 'read'])",
             "type": {
               ".validate": "newData.isString() && newData.val() === 'list_shared'"
@@ -72,12 +72,12 @@
           }
         },
         "sharedWithMe": {
-          ".write": "auth.uid === $uid",
+          ".write": "auth !== null",
           "$ownerUid": {
-            ".write": "auth.uid === $uid || auth.uid === $ownerUid",
+            ".write": "auth !== null && (auth.uid === $uid || auth.uid === $ownerUid)",
             "$listId": {
               ".read": "auth.uid === $uid",
-              ".write": "auth.uid === $uid || auth.uid === $ownerUid",
+              ".write": "auth !== null && (auth.uid === $uid || auth.uid === $ownerUid)",
               ".validate": "newData.isBoolean()"
             }
           }
