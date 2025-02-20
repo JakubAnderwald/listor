@@ -25,7 +25,7 @@
         "lists": {
           "$listId": {
             ".read": "auth !== null && (auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists())",
-            ".write": "auth !== null && (auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists())",
+            ".write": "auth !== null && auth.uid === $uid",
             "name": {
               ".validate": "newData.isString() && newData.val().length > 0"
             },
