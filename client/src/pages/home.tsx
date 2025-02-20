@@ -16,7 +16,7 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { signOut, user } = useAuth();
   const [selectedListId, setSelectedListId] = useState<number | null>(null);
-  const [currentFilter, setCurrentFilter] = useState<string>("next7days");
+  const [currentFilter, setCurrentFilter] = useState<string>("all");
 
   const { data: todos = [], isLoading: isLoadingTodos } = useQuery<Todo[]>({
     queryKey: ["/api/todos"],
@@ -50,7 +50,8 @@ export default function Home() {
         if (!existingInbox) {
           await firebaseDB.createList({
             name: "Inbox",
-            color: "#6366f1"
+            color: "#6366f1",
+            sharedCount: 0
           });
           return;
         }
@@ -80,14 +81,16 @@ export default function Home() {
     };
   }, [queryClient, user]);
 
+  // Set Inbox as default when lists are loaded
   useEffect(() => {
-    if (!isLoadingLists && lists.length > 0 && selectedListId === null && currentFilter === "all") {
+    if (!isLoadingLists && lists.length > 0 && selectedListId === null) {
       const inboxList = lists.find(list => list.name === "Inbox");
       if (inboxList) {
         setSelectedListId(inboxList.id);
+        setCurrentFilter("all");
       }
     }
-  }, [isLoadingLists, lists, selectedListId, currentFilter]);
+  }, [isLoadingLists, lists, selectedListId]);
 
   const handleListSelect = (listId: number | null) => {
     setSelectedListId(listId);

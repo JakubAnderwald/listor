@@ -285,29 +285,27 @@ export default function ListSelector({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative"
                     onClick={() => {
                       setListToShare(list);
                       setIsShareOpen(true);
                     }}
                   >
                     <Share2 className="h-4 w-4" />
-                    {list.sharedCount > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-                        {list.sharedCount}
-                      </span>
-                    )}
                   </Button>
                   {list.sharedCount > 0 && (
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="relative"
                       onClick={() => {
                         setListToShare(list);
                         setIsManageShareOpen(true);
                       }}
                     >
                       <Users className="h-4 w-4" />
+                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                        {list.sharedCount}
+                      </span>
                     </Button>
                   )}
                   <Button
