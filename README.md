@@ -1,158 +1,95 @@
-2. Install dependencies:
+# Listor - Smart Task Management
+
+An intelligent, adaptive todo application that transforms task management into an engaging personal productivity experience.
+
+## Features
+
+- **Real-time Collaboration**: Share task lists with granular permissions (view/edit)
+- **Smart Task Management**: Create, organize, and track tasks with subtasks
+- **Recurring Tasks**: Automatic generation of daily, weekly, and monthly recurring tasks
+- **Progressive Web App**: Offline support, installable, responsive design
+- **Email Invitations**: Robust invitation system using Brevo email service
+- **Firebase Integration**: Real-time database with secure authentication
+- **Dark Mode Support**: Complete theming system with user preferences
+
+## Technology Stack
+
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Firebase Realtime Database + Cloud Functions
+- **Styling**: Tailwind CSS + Radix UI components
+- **Email**: Brevo API for invitation system
+- **Authentication**: Firebase Auth with Google integration
+- **PWA**: Service Worker + Web App Manifest
+
+## Development
+
 ```bash
 npm install
-```
-
-3. Configure Firebase:
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Enable Google Authentication:
-     1. Go to Authentication > Sign-in method
-     2. Enable Google sign-in
-     3. Configure OAuth consent screen
-     4. Add authorized domains
-   - Enable Realtime Database:
-     1. Create a new Realtime Database
-     2. Start in test mode
-     3. Copy the database URL
-   - Set up security rules:
-     1. Go to Realtime Database > Rules
-     2. Copy the contents of `database.rules.json`
-     3. Save the rules
-   - Create a web app:
-     1. Go to Project Settings
-     2. Add a web app
-     3. Copy the Firebase configuration
-
-4. Create a `.env` file:
-```env
-VITE_FIREBASE_API_KEY=your-api-key
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_DATABASE_URL=your-database-url
-VITE_FIREBASE_APP_ID=your-app-id
-VITE_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
-VITE_EMAILJS_SERVICE_ID=your-emailjs-service-id
-```
-
-5. Start the development server:
-```bash
 npm run dev
 ```
 
-## 📖 Usage
+## Production Build
 
-### Authentication
-
-1. Click "Sign in with Google" on the login page
-2. Grant necessary permissions
-3. You'll be redirected to the main application
-
-### Managing Tasks
-
-#### Creating Tasks
-1. Enter task description in the input field
-2. (Optional) Set a due date using the calendar picker
-3. (Optional) Choose a recurrence pattern:
-   - Daily
-   - Weekly
-   - Monthly
-   - Yearly
-4. (Optional) Set priority level:
-   - High
-   - Medium
-   - Low
-5. Click "Add Todo" or press Enter
-
-New tasks are automatically added to:
-- Currently selected list
-- Inbox when using filters (Today, Next 7 Days, etc.)
-
-#### Task Actions
-- **Complete**: Click the checkbox
-- **Edit**: Click the pencil icon
-- **Delete**: Click the trash icon
-- **Set Due Date**: Use the calendar icon
-- **Set Recurrence**: Use the repeat icon
-- **Set Priority**: Use the flag icon
-
-#### Lists and Filters
-The sidebar provides a unified view of:
-- Smart filters (Today, Next 7 Days, etc.)
-- Custom lists
-Tasks can be filtered by:
-- All tasks
-- Active tasks
-- Completed tasks
-- Today's tasks
-- Next 7 days
-
-### Recurring Tasks
-
-When creating a recurring task:
-1. Set a due date (required for recurring tasks)
-2. Choose a recurrence pattern
-3. When completed, a new occurrence is automatically created
-
-The system maintains the original pattern while creating new occurrences, ensuring consistent task management.
-
-## 👩‍💻 Development
-
-### Project Structure
-```
-listor/
-├── client/           # Frontend React application
-│   ├── src/
-│   │   ├── components/   # React components
-│   │   ├── contexts/     # React contexts
-│   │   ├── hooks/        # Custom hooks
-│   │   ├── lib/          # Utility functions
-│   │   └── pages/        # Page components
-├── shared/           # Shared types and schemas
-└── database.rules.json  # Firebase security rules
-```
-
-## 📦 Deployment
-
-### Firebase Hosting Setup
-
-1. Install Firebase CLI globally (if not already installed):
-```bash
-npm install -g firebase-tools
-```
-
-2. Login to Firebase:
-```bash
-firebase login
-```
-
-3. Configure environment variables for production:
-```bash
-# Create a .env.production file with your production values
-firebase functions:config:set emailjs.public_key="your_emailjs_public_key"
-firebase functions:config:set emailjs.service_id="your_emailjs_service_id"
-```
-
-4. Deploy the application:
 ```bash
 npm run build
-firebase deploy
 ```
 
-### Environment Variables
+## Environment Variables
 
-The following environment variables are required:
+The application requires these environment variables:
 
-Development (`.env`):
 ```env
-VITE_FIREBASE_API_KEY=your-api-key
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_DATABASE_URL=your-database-url
-VITE_FIREBASE_APP_ID=your-app-id
-VITE_EMAILJS_PUBLIC_KEY=your-emailjs-public-key
-VITE_EMAILJS_SERVICE_ID=your-emailjs-service-id
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_DATABASE_URL=https://your_project-default-rtdb.firebaseio.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Brevo Email Service
+BREVO_API_KEY=your_brevo_api_key
 ```
 
-Production (Firebase):
-Make sure to set these using Firebase CLI:
-```bash
-firebase functions:config:set emailjs.public_key="your_value"
-firebase functions:config:set emailjs.service_id="your_value"
+## Project Structure
+
+```
+/
+├── client/          # React frontend application
+│   ├── src/
+│   │   ├── components/  # Reusable UI components
+│   │   ├── pages/       # Application pages
+│   │   ├── services/    # API and Firebase services
+│   │   ├── hooks/       # Custom React hooks
+│   │   └── types/       # TypeScript type definitions
+│   └── public/      # Static assets and PWA files
+├── functions/       # Firebase Cloud Functions
+├── shared/          # Shared TypeScript types and schemas
+├── firebase.json    # Firebase project configuration
+└── package.json     # Root package configuration
+```
+
+## Deployment
+
+This project is configured for Firebase Hosting with automatic deployment via GitHub Actions. The application is configured for the `listor.eu` domain.
+
+## Key Components
+
+- **Task Lists**: Create and manage multiple task lists
+- **Tasks & Subtasks**: Hierarchical task organization
+- **Real-time Sync**: Changes sync instantly across devices
+- **Sharing**: Invite others via email with view/edit permissions
+- **Recurring Tasks**: Automated task generation based on patterns
+- **Offline Support**: Works without internet connection
+- **PWA Features**: Installable as a native app
+
+## Architecture
+
+The application follows a modern full-stack architecture:
+
+- **Client**: Single-page React application with PWA capabilities
+- **Functions**: Serverless Firebase Cloud Functions for email invitations and recurring task generation
+- **Database**: Firebase Realtime Database for real-time collaboration
+- **Storage**: Firebase Storage for user avatars
+- **Email**: Brevo service for reliable email delivery

@@ -1,38 +1,57 @@
 # Dependencies
 node_modules/
-
-# Build outputs
-dist/
-build/
-*.tar.gz
-
-# Development
-.DS_Store
-*.log
-.env
-.env.local
-.env.*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Editor directories and files
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Production builds
+dist/
+build/
 
-# TypeScript
-*.tsbuildinfo
-vite.config.ts.*
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
 
 # Replit specific
-.replit/
-.breakpoints
-replit.nix
-
-# Server public directory
-server/public
+.replit
+.upm

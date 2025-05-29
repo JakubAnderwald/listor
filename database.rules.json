@@ -3,113 +3,39 @@
     "users": {
       "$uid": {
         ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid",
-        "profile": {
-          ".validate": "newData.hasChildren(['uid', 'email', 'displayName', 'lastLogin'])",
-          "uid": {
-            ".validate": "newData.isString() && newData.val() === $uid"
-          },
-          "email": {
-            ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
-          },
-          "displayName": {
-            ".validate": "newData.isString()"
-          },
-          "photoURL": {
-            ".validate": "!newData.exists() || newData.isString()"
-          },
-          "lastLogin": {
-            ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
-          }
-        },
-        "lists": {
-          "$listId": {
-            ".read": "auth !== null && (auth.uid === $uid || root.child('users').child($uid).child('lists').child($listId).child('sharedWith').child(auth.token.email.replace('.', '_')).exists())",
-            ".write": "auth !== null && auth.uid === $uid",
-            "name": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "color": {
-              ".validate": "newData.isString() && newData.val().matches(/^#[0-9A-Fa-f]{6}$/)"
-            },
-            "createdAt": {
-              ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
-            },
-            "sharedCount": {
-              ".validate": "newData.isNumber()"
-            },
-            "sharedWith": {
-              ".write": "auth !== null && auth.uid === $uid",
-              "$email": {
-                ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/)"
-              }
-            }
-          }
-        },
-        "notifications": {
-          "$notificationId": {
-            ".read": "auth.uid === $uid",
-            ".write": "auth !== null && (auth.uid === $uid || !data.exists())",
-            ".validate": "newData.hasChildren(['type', 'message', 'createdAt', 'read'])",
-            "type": {
-              ".validate": "newData.isString() && newData.val() === 'list_shared'"
-            },
-            "message": {
-              ".validate": "newData.isString()"
-            },
-            "createdAt": {
-              ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z$/)"
-            },
-            "read": {
-              ".validate": "newData.isBoolean()"
-            },
-            "listId": {
-              ".validate": "newData.isNumber()"
-            },
-            "fromUser": {
-              ".validate": "newData.hasChildren(['uid', 'displayName'])"
-            }
-          }
-        },
-        "sharedWithMe": {
-          ".write": "auth !== null",
-          "$ownerUid": {
-            ".write": "auth !== null && (auth.uid === $uid || auth.uid === $ownerUid)",
-            "$listId": {
-              ".read": "auth.uid === $uid",
-              ".write": "auth !== null && (auth.uid === $uid || auth.uid === $ownerUid)",
-              ".validate": "newData.isBoolean()"
-            }
-          }
-        },
-        "todos": {
-          "$todoId": {
-            ".read": "auth.uid === $uid",
-            ".write": "auth.uid === $uid",
-            ".validate": "newData.hasChildren(['text', 'completed', 'listId'])",
-            "text": {
-              ".validate": "newData.isString() && newData.val().length > 0"
-            },
-            "completed": {
-              ".validate": "newData.isBoolean()"
-            },
-            "dueDate": {
-              ".validate": "!newData.exists() || newData.isString()"
-            },
-            "recurrenceType": {
-              ".validate": "!newData.exists() || (newData.isString() && (newData.val() === 'none' || newData.val() === 'daily' || newData.val() === 'weekly' || newData.val() === 'monthly' || newData.val() === 'yearly'))"
-            },
-            "originalDueDate": {
-              ".validate": "!newData.exists() || newData.isString()"
-            },
-            "priority": {
-              ".validate": "!newData.exists() || (newData.isString() && (newData.val() === 'none' || newData.val() === 'low' || newData.val() === 'medium' || newData.val() === 'high'))"
-            },
-            "listId": {
-              ".validate": "newData.isNumber()"
-            }
-          }
-        }
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "taskLists": {
+      ".read": "auth != null",
+      "$listId": {
+        ".read": "auth != null && (data.child('ownerId').val() === auth.uid || data.child('sharedWith').child(auth.uid).exists())",
+        ".write": "auth != null && (newData.child('ownerId').val() === auth.uid || data.child('ownerId').val() === auth.uid || (data.child('sharedWith').child(auth.uid).child('permission').val() === 'edit'))"
+      }
+    },
+    "tasks": {
+      ".read": "auth != null",
+      ".indexOn": ["listId"],
+      "$taskId": {
+        ".read": "auth != null && (root.child('taskLists').child(data.child('listId').val()).child('ownerId').val() === auth.uid || root.child('taskLists').child(data.child('listId').val()).child('sharedWith').child(auth.uid).exists())",
+        ".write": "auth != null && (newData.child('createdBy').val() === auth.uid || data.child('createdBy').val() === auth.uid || root.child('taskLists').child(newData.child('listId').val()).child('ownerId').val() === auth.uid || root.child('taskLists').child(data.child('listId').val()).child('sharedWith').child(auth.uid).child('permission').val() === 'edit')"
+      }
+    },
+    "subtasks": {
+      ".read": "auth != null",
+      ".indexOn": ["taskId"],
+      "$subtaskId": {
+        ".read": "auth != null && (root.child('tasks').child(data.child('taskId').val()).child('createdBy').val() === auth.uid || root.child('taskLists').child(root.child('tasks').child(data.child('taskId').val()).child('listId').val()).child('sharedWith').child(auth.uid).exists())",
+        ".write": "auth != null && (newData.child('createdBy').val() === auth.uid || data.child('createdBy').val() === auth.uid || root.child('tasks').child(newData.child('taskId').val()).child('createdBy').val() === auth.uid || root.child('taskLists').child(root.child('tasks').child(data.child('taskId').val()).child('listId').val()).child('sharedWith').child(auth.uid).child('permission').val() === 'edit')"
+      }
+    },
+    "invitations": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ["listId"],
+      "$invitationId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     }
   }

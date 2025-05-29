@@ -1,51 +1,62 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "./components/auth/AuthProvider";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { OfflineNotification } from "@/components/ui/OfflineNotification";
+import { analytics } from "./services/analyticsService";
+import { useEffect } from "react";
+import AuthPage from "./pages/auth";
+import Dashboard from "./pages/dashboard";
+import TaskListPage from "./pages/task-list";
+import InvitationPage from "./pages/invitation";
 import NotFound from "@/pages/not-found";
-import Home from "@/pages/home";
-import Login from "@/pages/login";
-import { AuthProvider, useAuth } from "@/contexts/auth-context";
-import { Loader2 } from "lucide-react";
-
-function ProtectedRoute({ component: Component }: { component: () => JSX.Element }) {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Redirect to="/login" />;
-  }
-
-  return <Component />;
-}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/">
-        <ProtectedRoute component={Home} />
+      <Route path="/" component={AuthPage} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
       </Route>
+      <Route path="/list/:listId">
+        <ProtectedRoute>
+          <TaskListPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/invitation/:token" component={InvitationPage} />
+      {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize analytics and performance monitoring
+    analytics.initialize();
+  }, []);
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <div className="min-h-screen bg-background">
+              <OfflineNotification />
+              <Router />
+            </div>
+            <Toaster />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

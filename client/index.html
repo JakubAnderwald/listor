@@ -2,10 +2,36 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Listor - Smart Task Management</title>
+    <meta name="description" content="The intelligent todo app that adapts to your productivity style. Organize tasks, collaborate with others, and automate recurring activities." />
+    <meta name="theme-color" content="#2563eb" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" href="/generated-icon.png" />
+    <meta property="og:title" content="Listor - Smart Task Management" />
+    <meta property="og:description" content="The intelligent todo app that adapts to your productivity style" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://listor.eu" />
+    <meta property="og:image" content="https://listor.eu/generated-icon.png" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>

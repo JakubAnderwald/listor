@@ -2,9 +2,17 @@
   "database": {
     "rules": "database.rules.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "functions/src",
+    "predeploy": [
+      "npm --prefix functions run build"
+    ]
+  },
   "hosting": {
-    "target": "listor-76c28",
-    "public": "dist/public",
+    "public": "client/dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -14,6 +22,25 @@
       {
         "source": "**",
         "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block"
+          }
+        ]
       }
     ]
   }
